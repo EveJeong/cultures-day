@@ -3,8 +3,9 @@ import Logo from '../components/Logo'
 import { isFirebaseConfigured } from '../lib/firebase'
 import ProgressTab from './admin/ProgressTab'
 import ContentTab from './admin/ContentTab'
+import SettingsTab from './admin/SettingsTab'
 
-type Tab = 'progress' | 'content'
+type Tab = 'progress' | 'content' | 'settings'
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('progress')
@@ -30,9 +31,15 @@ export default function AdminPage() {
             >
               콘텐츠
             </button>
+            <button
+              className={`btn-mini ${tab === 'settings' ? 'bg-pink-500 text-white' : ''}`}
+              onClick={() => setTab('settings')}
+            >
+              설정
+            </button>
           </div>
 
-          {tab === 'progress' ? <ProgressTab /> : <ContentTab />}
+          {tab === 'progress' ? <ProgressTab /> : tab === 'content' ? <ContentTab /> : <SettingsTab />}
         </>
       )}
     </div>
