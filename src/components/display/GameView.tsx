@@ -17,15 +17,17 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
 
   // playing
   return (
-    <div className="flex w-full flex-col items-center gap-6">
+    <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3">
       <TimerView timer={state.timer} />
-      {game.engineType === 'quiz' ? (
-        <QuizScreen />
-      ) : game.engineType === 'prompt' ? (
-        <PromptScreen />
-      ) : (
-        <GenericPlaying game={game} />
-      )}
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+        {game.engineType === 'quiz' ? (
+          <QuizScreen />
+        ) : game.engineType === 'prompt' ? (
+          <PromptScreen />
+        ) : (
+          <GenericPlaying game={game} />
+        )}
+      </div>
     </div>
   )
 }
