@@ -20,6 +20,12 @@
     @apply font-head text-xl px-6 py-3 rounded-2xl bg-white/90 text-pink-600
            border-4 border-pink-400 shadow-lg transition active:scale-95 hover:-translate-y-0.5;
   }
+
+  /* 운영 페이지 소형 버튼 */
+  .btn-mini {
+    @apply font-head text-sm px-3 py-1.5 rounded-xl bg-pink-100 text-pink-700
+           border-2 border-pink-300 transition active:scale-95 disabled:opacity-40;
+  }
 }
 
 @layer utilities {
