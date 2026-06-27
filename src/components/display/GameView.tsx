@@ -55,14 +55,14 @@ function IntroView({ game }: { game: Game }) {
     <div className="flex max-w-3xl flex-col items-center gap-6 text-center">
       <h1 className="wordart wordart-yellow text-7xl">{game.name}</h1>
       {game.description && (
-        <p className="rounded-3xl bg-white/90 p-6 font-head text-2xl text-gray-700">
+        <p className="whitespace-pre-line rounded-3xl bg-white/90 p-6 font-head text-2xl text-gray-700">
           {game.description}
         </p>
       )}
       {game.scoringExplanation && (
         <div className="rounded-3xl bg-white/80 px-6 py-4">
           <p className="font-head text-lg text-pink-600">점수 산정 방식</p>
-          <p className="font-body text-xl text-gray-700">{game.scoringExplanation}</p>
+          <p className="whitespace-pre-line font-body text-xl text-gray-700">{game.scoringExplanation}</p>
         </div>
       )}
     </div>
@@ -75,7 +75,7 @@ function GenericPlaying({ game }: { game: Game }) {
       <h1 className="wordart wordart-yellow text-6xl">{game.name}</h1>
       <p className="wordart wordart-white text-3xl">진행 중!</p>
       {game.scoringExplanation && (
-        <p className="rounded-3xl bg-white/85 px-6 py-3 font-body text-xl text-gray-700">
+        <p className="whitespace-pre-line rounded-3xl bg-white/85 px-6 py-3 font-body text-xl text-gray-700">
           {game.scoringExplanation}
         </p>
       )}

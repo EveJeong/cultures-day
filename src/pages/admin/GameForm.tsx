@@ -76,8 +76,8 @@ export default function GameForm({
             {SCORINGS.map((x) => <option key={x} value={x}>{x}</option>)}
           </select>
         </Field>
-        <div className="col-span-2"><Field label="규칙 설명"><input className={inputCls} value={description} onChange={(e) => setDescription(e.target.value)} /></Field></div>
-        <div className="col-span-2"><Field label="점수 산정 방식 문구"><input className={inputCls} value={explain} onChange={(e) => setExplain(e.target.value)} /></Field></div>
+        <div className="col-span-2"><Field label="규칙 설명 (줄바꿈 가능)"><textarea className={inputCls} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} /></Field></div>
+        <div className="col-span-2"><Field label="점수 산정 방식 문구 (줄바꿈 가능)"><textarea className={inputCls} rows={3} value={explain} onChange={(e) => setExplain(e.target.value)} /></Field></div>
 
         {scoringType === 'rank' && (
           <div className="col-span-2 grid grid-cols-3 gap-2">

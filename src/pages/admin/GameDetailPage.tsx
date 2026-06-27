@@ -78,9 +78,9 @@ export default function GameDetailPage() {
             <GameForm game={game} nextOrder={game.order} onClose={() => setEditing(false)} />
           </div>
         ) : (
-          <div className="mt-2 font-body text-sm text-gray-600">
-            <div>규칙: {game.description || '—'}</div>
-            <div>점수 산정: {game.scoringExplanation || '—'}</div>
+          <div className="mt-2 space-y-1 font-body text-sm text-gray-600">
+            <div className="whitespace-pre-line">규칙: {game.description || '—'}</div>
+            <div className="whitespace-pre-line">점수 산정: {game.scoringExplanation || '—'}</div>
           </div>
         )}
       </Panel>
