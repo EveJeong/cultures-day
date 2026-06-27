@@ -2,7 +2,11 @@ import { Navigate, Routes, Route } from 'react-router-dom'
 import MainPage from './pages/MainPage'
 import LoginPage from './pages/LoginPage'
 import SpectatorPage from './pages/SpectatorPage'
-import AdminPage from './pages/AdminPage'
+import AdminLayout from './pages/admin/AdminLayout'
+import GamesPage from './pages/admin/GamesPage'
+import GameDetailPage from './pages/admin/GameDetailPage'
+import ParticipantsPage from './pages/admin/ParticipantsPage'
+import TeamDetailPage from './pages/admin/TeamDetailPage'
 import DisplayView from './components/display/DisplayView'
 import ClosedScreen from './components/ClosedScreen'
 import { getSession } from './lib/auth'
@@ -28,7 +32,12 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/spectator" element={<SpectatorPage />} />
-      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<GamesPage />} />
+        <Route path="games/:id" element={<GameDetailPage />} />
+        <Route path="participants" element={<ParticipantsPage />} />
+        <Route path="teams/:id" element={<TeamDetailPage />} />
+      </Route>
       <Route path="*" element={<Home />} />
     </Routes>
   )

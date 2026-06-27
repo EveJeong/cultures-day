@@ -44,6 +44,7 @@ export interface Game {
   rounds?: string[]
   timer?: { mode: 'countdown' | 'stopwatch'; durationSec?: number }
   order: number
+  excluded?: boolean // 시작 전 진행 제외(되돌림 가능)
 }
 
 export interface Question {

@@ -17,6 +17,11 @@ export async function deleteGame(id: string) {
   await deleteDoc(doc(requireDb(), 'games', id))
 }
 
+/** 게임 제외/복구 (시작 전 진행 차단, 되돌림 가능) */
+export async function setGameExcluded(id: string, excluded: boolean) {
+  await setDoc(doc(requireDb(), 'games', id), { excluded }, { merge: true })
+}
+
 export function newGameId(): string {
   return `g-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`
 }

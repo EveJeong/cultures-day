@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "game-yaho"
+resolve_s3 = true
+s3_prefix = "game-yaho"
+region = "ap-northeast-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "BucketName=\"game-yaho-bucket\" AllowOrigin=\"*\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-northeast-2"

@@ -115,7 +115,7 @@ function GameList({
 
 /* ---------- 게임 진행 (가이드 단계) ---------- */
 
-function GameRunner({
+export function GameRunner({
   game,
   state,
   teams,
