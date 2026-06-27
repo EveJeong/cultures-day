@@ -57,9 +57,15 @@ export default function QuizContent({ gameId }: { gameId: string }) {
     reset()
   }
 
-  const swap = async (a: Question, b: Question) => {
-    await updateQuestion(a.id, { order: b.order })
-    await updateQuestion(b.id, { order: a.order })
+  // 위치 교환 후 전체 0..n-1 순번 재할당 (order 중복이어도 안전)
+  const move = async (i: number, dir: -1 | 1) => {
+    const j = i + dir
+    if (j < 0 || j >= questions.length) return
+    const arr = [...questions]
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    await Promise.all(
+      arr.map((q, idx) => (q.order !== idx ? updateQuestion(q.id, { order: idx }) : Promise.resolve())),
+    )
   }
 
   return (
@@ -129,8 +135,8 @@ export default function QuizContent({ gameId }: { gameId: string }) {
               <span className="truncate">{promptSummary(q)} → {q.answerText || (q.answerMedia ? mediaLabel(q.answerMedia) : '')}</span>
               {q.kind === 'practice' && <span className="text-gray-400">(연습)</span>}
             </span>
-            <button className="btn-mini" disabled={i === 0} onClick={() => swap(q, questions[i - 1])}>▲</button>
-            <button className="btn-mini" disabled={i === questions.length - 1} onClick={() => swap(q, questions[i + 1])}>▼</button>
+            <button className="btn-mini" disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
+            <button className="btn-mini" disabled={i === questions.length - 1} onClick={() => move(i, 1)}>▼</button>
             <button className="btn-mini shrink-0" onClick={() => deleteQuestion(q.id)}>삭제</button>
           </li>
         ))}
