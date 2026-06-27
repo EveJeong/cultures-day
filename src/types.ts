@@ -1,6 +1,6 @@
 // Firestore 데이터 모델 타입 (designs/04-data-model.md)
 
-export type TeamId = 'J' | 'I' | 'L'
+export type TeamId = string // 동적 팀 (팀 문서 id)
 export type EngineType = 'quiz' | 'prompt' | 'none'
 export type ScoringType = 'quiz' | 'rank' | 'increment' | 'free'
 export type Phase = 'intro' | 'playing' | 'result'
@@ -11,6 +11,7 @@ export interface Team {
   id: TeamId
   name: string
   color: string
+  leaderId?: string // 팀장 (user name)
 }
 
 export interface User {

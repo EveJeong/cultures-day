@@ -21,7 +21,6 @@ import PromptEngine from './PromptEngine'
 
 const PHASES: Phase[] = ['intro', 'playing', 'result']
 const PHASE_LABEL: Record<Phase, string> = { intro: '소개', playing: '진행', result: '결과' }
-const TEAM_IDS: TeamId[] = ['J', 'I', 'L']
 
 export default function ProgressTab() {
   const state = useGameState()
@@ -252,8 +251,6 @@ function ResultStage({
 /* ---------- 점수 배정 (유형별) ---------- */
 
 function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
-  const teamName = (id: TeamId) => teams.find((t) => t.id === id)?.name ?? id
-
   if (game.engineType === 'quiz') return <QuizEngine game={game} />
   if (game.engineType === 'prompt') return <PromptEngine game={game} />
 
@@ -261,11 +258,11 @@ function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
     const opts = game.incrementOptions ?? [10]
     return (
       <div className="space-y-2">
-        {TEAM_IDS.map((id) => (
-          <div key={id} className="flex items-center gap-2">
-            <span className="w-16 font-head">{teamName(id)}</span>
+        {teams.map((t) => (
+          <div key={t.id} className="flex items-center gap-2">
+            <span className="w-16 truncate font-head">{t.name}</span>
             {opts.map((n) => (
-              <button key={n} className="btn-mini" onClick={() => awardIncrement(game, id, n)}>
+              <button key={n} className="btn-mini" onClick={() => awardIncrement(game, t.id, n)}>
                 +{n}
               </button>
             ))}
@@ -274,13 +271,13 @@ function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
       </div>
     )
   }
-  if (game.scoringType === 'rank') return <RankControl game={game} teamName={teamName} />
-  if (game.scoringType === 'free') return <FreeControl game={game} teamName={teamName} />
+  if (game.scoringType === 'rank') return <RankControl game={game} teams={teams} />
+  if (game.scoringType === 'free') return <FreeControl game={game} teams={teams} />
   return null
 }
 
-function RankControl({ game, teamName }: { game: Game; teamName: (id: TeamId) => string }) {
-  const [ranks, setRanks] = useState<Partial<Record<TeamId, 1 | 2 | 3>>>({})
+function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
+  const [ranks, setRanks] = useState<Record<TeamId, 1 | 2 | 3>>({})
   const [round, setRound] = useState(game.rounds?.[0] ?? 'main')
   const rp = game.rankPoints
 
@@ -291,14 +288,14 @@ function RankControl({ game, teamName }: { game: Game; teamName: (id: TeamId) =>
           {game.rounds.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       )}
-      {TEAM_IDS.map((id) => (
-        <div key={id} className="flex items-center gap-2">
-          <span className="w-16 font-head">{teamName(id)}</span>
+      {teams.map((t) => (
+        <div key={t.id} className="flex items-center gap-2">
+          <span className="w-16 truncate font-head">{t.name}</span>
           {([1, 2, 3] as const).map((r) => (
             <button
               key={r}
-              className={`btn-mini ${ranks[id] === r ? 'bg-pink-500 text-white' : ''}`}
-              onClick={() => setRanks((prev) => ({ ...prev, [id]: r }))}
+              className={`btn-mini ${ranks[t.id] === r ? 'bg-pink-500 text-white' : ''}`}
+              onClick={() => setRanks((prev) => ({ ...prev, [t.id]: r }))}
             >
               {r}등{rp ? ` (${rp[r]})` : ''}
             </button>
@@ -312,22 +309,23 @@ function RankControl({ game, teamName }: { game: Game; teamName: (id: TeamId) =>
   )
 }
 
-function FreeControl({ game, teamName }: { game: Game; teamName: (id: TeamId) => string }) {
-  const [pts, setPts] = useState<Record<TeamId, string>>({ J: '', I: '', L: '' })
-  const sum = TEAM_IDS.reduce((s, id) => s + (Number(pts[id]) || 0), 0)
+function FreeControl({ game, teams }: { game: Game; teams: Team[] }) {
+  const [pts, setPts] = useState<Record<TeamId, string>>({})
+  const val = (id: TeamId) => pts[id] ?? ''
+  const sum = teams.reduce((s, t) => s + (Number(val(t.id)) || 0), 0)
   const total = game.totalPoints
   const mismatch = total != null && sum !== total
 
   return (
     <div className="space-y-2">
-      {TEAM_IDS.map((id) => (
-        <div key={id} className="flex items-center gap-2">
-          <span className="w-16 font-head">{teamName(id)}</span>
+      {teams.map((t) => (
+        <div key={t.id} className="flex items-center gap-2">
+          <span className="w-16 truncate font-head">{t.name}</span>
           <input
             type="number"
             className="flex-1 rounded-xl border-2 border-pink-200 p-2 font-body"
-            value={pts[id]}
-            onChange={(e) => setPts((prev) => ({ ...prev, [id]: e.target.value }))}
+            value={val(t.id)}
+            onChange={(e) => setPts((prev) => ({ ...prev, [t.id]: e.target.value }))}
           />
         </div>
       ))}
@@ -342,7 +340,7 @@ function FreeControl({ game, teamName }: { game: Game; teamName: (id: TeamId) =>
         onClick={() =>
           awardFree(
             game,
-            Object.fromEntries(TEAM_IDS.map((id) => [id, Number(pts[id]) || 0])) as Partial<Record<TeamId, number>>,
+            Object.fromEntries(teams.map((t) => [t.id, Number(val(t.id)) || 0])) as Partial<Record<TeamId, number>>,
           )
         }
       >

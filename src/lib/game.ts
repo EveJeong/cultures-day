@@ -54,7 +54,7 @@ export function useUsers(): User[] {
 
 /** 팀 총점 = 유효(voided=false) scoreLog 합계 */
 export function teamTotals(log: ScoreLog[]): Record<TeamId, number> {
-  const totals: Record<TeamId, number> = { J: 0, I: 0, L: 0 }
+  const totals: Record<TeamId, number> = {}
   for (const entry of log) {
     if (entry.voided) continue
     totals[entry.teamId] = (totals[entry.teamId] ?? 0) + (entry.points ?? 0)
@@ -71,7 +71,7 @@ export interface RankedTeam {
 
 export function rankedTeams(teams: Team[], log: ScoreLog[]): RankedTeam[] {
   const totals = teamTotals(log)
-  const sorted = [...teams].sort((a, b) => totals[b.id] - totals[a.id])
+  const sorted = [...teams].sort((a, b) => (totals[b.id] ?? 0) - (totals[a.id] ?? 0))
   let lastScore = Number.POSITIVE_INFINITY
   let lastRank = 0
   return sorted.map((team, i) => {

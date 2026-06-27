@@ -9,8 +9,6 @@ import {
 } from '../../lib/admin'
 import type { Game, Prompt, TeamId } from '../../types'
 
-const TEAM_ORDER: TeamId[] = ['J', 'I', 'L']
-
 export default function PromptEngine({ game }: { game: Game }) {
   const state = useGameState()
   const teams = useTeams()
@@ -24,11 +22,12 @@ export default function PromptEngine({ game }: { game: Game }) {
   const [points, setPoints] = useState(String(game.incrementOptions?.[0] ?? 10))
 
   if (!state) return null
+  const teamOrder = teams.map((t) => t.id)
   const teamName = (id: TeamId) => teams.find((t) => t.id === id)?.name ?? id
 
   /* 첫 진행 가능한 팀/제시어 찾기 */
   const firstPlayable = (assignment: Record<TeamId, string>) => {
-    for (const t of TEAM_ORDER) {
+    for (const t of teamOrder) {
       const first = promptsOf(assignment[t])[0]
       if (first) return { teamId: t, promptId: first.id }
     }
@@ -36,21 +35,21 @@ export default function PromptEngine({ game }: { game: Game }) {
   }
 
   const start = async () => {
-    const picked = [...sets].slice(0, 3).sort(() => Math.random() - 0.5)
-    const assignment = { J: picked[0].id, I: picked[1].id, L: picked[2].id } as Record<TeamId, string>
+    const picked = [...sets].slice(0, teams.length).sort(() => Math.random() - 0.5)
+    const assignment = Object.fromEntries(teams.map((t, i) => [t.id, picked[i].id])) as Record<TeamId, string>
     const fp = firstPlayable(assignment)
     if (!fp) return
-    await startPromptGame(assignment, TEAM_ORDER, fp.teamId, fp.promptId)
+    await startPromptGame(assignment, teamOrder, fp.teamId, fp.promptId)
   }
 
   /* 게임 시작 전 */
   if (!state.promptAssignment) {
     return (
       <div className="space-y-2">
-        <p className="font-body text-sm text-gray-500">묶음 {sets.length}개 (3개 필요)</p>
+        <p className="font-body text-sm text-gray-500">묶음 {sets.length}개 (팀 수 {teams.length}개 필요)</p>
         <button
           className="btn-mini w-full bg-pink-500 text-white disabled:opacity-40"
-          disabled={sets.length < 3}
+          disabled={sets.length < teams.length}
           onClick={start}
         >
           게임 시작 (묶음 랜덤 배정)
@@ -60,7 +59,7 @@ export default function PromptEngine({ game }: { game: Game }) {
   }
 
   const assignment = state.promptAssignment
-  const teamId = state.currentTeamId ?? 'J'
+  const teamId = state.currentTeamId ?? teamOrder[0] ?? ''
   const setPrompts = promptsOf(assignment[teamId])
   const idx = setPrompts.findIndex((p) => p.id === state.currentPromptId)
   const current: Prompt | undefined = setPrompts[idx]
@@ -69,10 +68,10 @@ export default function PromptEngine({ game }: { game: Game }) {
   const advance = async () => {
     const next = setPrompts[idx + 1]
     if (next) return gotoPrompt(teamId, next.id)
-    const ti = TEAM_ORDER.indexOf(teamId)
-    for (let i = ti + 1; i < TEAM_ORDER.length; i++) {
-      const first = promptsOf(assignment[TEAM_ORDER[i]])[0]
-      if (first) return gotoPrompt(TEAM_ORDER[i], first.id)
+    const ti = teamOrder.indexOf(teamId)
+    for (let i = ti + 1; i < teamOrder.length; i++) {
+      const first = promptsOf(assignment[teamOrder[i]])[0]
+      if (first) return gotoPrompt(teamOrder[i], first.id)
     }
     await finishPromptGame()
   }

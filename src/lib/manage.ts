@@ -43,7 +43,26 @@ export async function loadPresetGames(): Promise<number> {
 /* ---------- 팀 ---------- */
 
 export async function saveTeam(teamId: TeamId, data: { name: string; color: string }) {
-  await setDoc(doc(requireDb(), 'teams', teamId), { id: teamId, ...data })
+  await setDoc(doc(requireDb(), 'teams', teamId), { id: teamId, ...data }, { merge: true })
+}
+
+export function newTeamId(): string {
+  return `t-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`
+}
+
+export async function addTeam(name: string, color: string): Promise<string> {
+  const id = newTeamId()
+  await setDoc(doc(requireDb(), 'teams', id), { id, name, color })
+  return id
+}
+
+export async function deleteTeam(teamId: TeamId) {
+  await deleteDoc(doc(requireDb(), 'teams', teamId))
+}
+
+/** 팀장 지정 (user name) */
+export async function setTeamLeader(teamId: TeamId, leaderId: string) {
+  await setDoc(doc(requireDb(), 'teams', teamId), { leaderId }, { merge: true })
 }
 
 /* ---------- 사용자 ---------- */
