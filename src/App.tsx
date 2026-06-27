@@ -4,7 +4,9 @@ import LoginPage from './pages/LoginPage'
 import SpectatorPage from './pages/SpectatorPage'
 import AdminPage from './pages/AdminPage'
 import DisplayView from './components/display/DisplayView'
+import ClosedScreen from './components/ClosedScreen'
 import { getSession } from './lib/auth'
+import { useAppConfig } from './lib/remoteConfig'
 
 /** 세션에 따라 분기: 미인증→랜딩, 참가자→개인화 진행, 운영자→/admin */
 function Home() {
@@ -15,6 +17,12 @@ function Home() {
 }
 
 export default function App() {
+  const { status, logoUrl, eventName } = useAppConfig()
+
+  if (status === 'closed') {
+    return <ClosedScreen logoUrl={logoUrl} eventName={eventName} />
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
