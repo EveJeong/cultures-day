@@ -1,6 +1,15 @@
 import { orderBy } from 'firebase/firestore'
 import { useDocument, useCollection } from './useFirestore'
-import type { Game, GameState, ScoreLog, Team, TeamId } from '../types'
+import type {
+  Game,
+  GameState,
+  Prompt,
+  PromptSet,
+  Question,
+  ScoreLog,
+  Team,
+  TeamId,
+} from '../types'
 
 /** 진행 상태 단일 문서 (state/current) */
 export function useGameState(): GameState | null {
@@ -20,6 +29,21 @@ export function useGames(): Game[] {
 /** 전체 점수 로그 구독 (규모 작아 클라이언트 집계) */
 export function useScoreLog(): ScoreLog[] {
   return useCollection<ScoreLog>('scoreLog')
+}
+
+/** 퀴즈 문제 전체 (클라이언트 필터·정렬) */
+export function useQuestions(): Question[] {
+  return useCollection<Question>('questions')
+}
+
+/** 제시어 묶음 전체 */
+export function usePromptSets(): PromptSet[] {
+  return useCollection<PromptSet>('promptSets')
+}
+
+/** 제시어 전체 */
+export function usePrompts(): Prompt[] {
+  return useCollection<Prompt>('prompts')
 }
 
 /** 팀 총점 = 유효(voided=false) scoreLog 합계 */
