@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Game, Phase, TeamId } from '../types'
+import type { Game, Phase, QuizScreen, TeamId } from '../types'
 
 function requireDb() {
   if (!db) throw new Error('Firestore 미설정')
@@ -92,4 +92,48 @@ export async function awardFree(game: Game, points: Partial<Record<TeamId, numbe
 /** 되돌리기 — 항목 무효화/복구 */
 export async function setVoided(scoreLogId: string, voided: boolean) {
   await updateDoc(doc(requireDb(), 'scoreLog', scoreLogId), { voided })
+}
+
+/* ---------- 퀴즈 진행 엔진 ---------- */
+
+/** 문제 출제: 현재 문제로 띄우고(q1) used 마킹 (designs/02 §4.10) */
+export async function setCurrentQuestion(questionId: string) {
+  const d = requireDb()
+  await setDoc(
+    doc(d, 'state', 'current'),
+    { currentQuestionId: questionId, quizScreen: 'q1' },
+    { merge: true },
+  )
+  await updateDoc(doc(d, 'questions', questionId), { used: true })
+}
+
+export async function setQuizScreen(quizScreen: QuizScreen) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { quizScreen })
+}
+
+/** 문제 종료 → 목록 대기 */
+export async function clearQuestion() {
+  await setDoc(
+    doc(requireDb(), 'state', 'current'),
+    { currentQuestionId: null, quizScreen: 'q1' },
+    { merge: true },
+  )
+}
+
+/** 정답 등록(팀 단위, 멱등 docId). 개인 단위는 사용자 관리 후 확장. */
+export async function awardQuizTeams(
+  game: Game,
+  questionId: string,
+  teams: TeamId[],
+  points: number,
+) {
+  await Promise.all(
+    teams.map((teamId) =>
+      setDoc(doc(requireDb(), 'scoreLog', `${game.id}__${questionId}__${teamId}`), {
+        ...base(game.id, teamId),
+        points,
+        questionId,
+      }),
+    ),
+  )
 }

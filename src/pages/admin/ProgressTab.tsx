@@ -10,6 +10,7 @@ import {
 } from '../../lib/admin'
 import type { Game, Phase, ScoreLog, Team, TeamId } from '../../types'
 import { Panel } from './ui'
+import QuizEngine from './QuizEngine'
 
 const PHASES: Phase[] = ['intro', 'playing', 'result']
 const TEAM_IDS: TeamId[] = ['J', 'I', 'L']
@@ -73,7 +74,9 @@ export default function ProgressTab() {
       </Panel>
 
       <Panel>
-        <h2 className="mb-2 font-head text-lg text-pink-600">점수 배정</h2>
+        <h2 className="mb-2 font-head text-lg text-pink-600">
+          {game.engineType === 'quiz' ? '퀴즈 진행' : game.engineType === 'prompt' ? '제시어 진행' : '점수 배정'}
+        </h2>
         <ScorePanel game={game} teams={teams} />
       </Panel>
 
@@ -87,6 +90,11 @@ export default function ProgressTab() {
 
 function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
   const teamName = (id: TeamId) => teams.find((t) => t.id === id)?.name ?? id
+
+  // 진행 엔진(퀴즈/제시어)은 전용 화면에서 점수 부여
+  if (game.engineType === 'quiz') return <QuizEngine game={game} />
+  if (game.engineType === 'prompt')
+    return <p className="font-body text-sm text-gray-400">제시어 진행 엔진 (다음 청크)</p>
 
   if (game.scoringType === 'increment') {
     const opts = game.incrementOptions ?? [10]
