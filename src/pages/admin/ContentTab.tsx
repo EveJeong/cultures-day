@@ -175,14 +175,24 @@ function PromptManager() {
   const sets = usePromptSets()
   const prompts = usePrompts()
 
-  const [gameId, setGameId] = useState(promptGames[0]?.id ?? '')
-  const gameSets = sets.filter((s) => s.gameId === gameId).sort((a, b) => a.order - b.order)
+  const [gameId, setGameId] = useState('')
+  // 게임 목록이 비동기 로드되므로, 선택값이 유효하지 않으면 첫 제시어 게임으로 폴백
+  const effectiveGameId = promptGames.some((g) => g.id === gameId)
+    ? gameId
+    : (promptGames[0]?.id ?? '')
+  const gameSets = sets
+    .filter((s) => s.gameId === effectiveGameId)
+    .sort((a, b) => a.order - b.order)
 
   return (
     <Panel>
       <h2 className="mb-2 font-head text-lg text-pink-600">제시어 묶음</h2>
 
-      <select className={`${inputCls} w-full`} value={gameId} onChange={(e) => setGameId(e.target.value)}>
+      <select
+        className={`${inputCls} w-full`}
+        value={effectiveGameId}
+        onChange={(e) => setGameId(e.target.value)}
+      >
         {promptGames.map((g) => (
           <option key={g.id} value={g.id}>{g.name}</option>
         ))}
@@ -192,7 +202,8 @@ function PromptManager() {
         <span className="font-body text-sm text-gray-500">묶음 {gameSets.length}개 (3개 권장)</span>
         <button
           className="btn-mini"
-          onClick={() => addPromptSet(gameId, `묶음 ${gameSets.length + 1}`, gameSets.length)}
+          disabled={!effectiveGameId}
+          onClick={() => addPromptSet(effectiveGameId, `묶음 ${gameSets.length + 1}`, gameSets.length)}
         >
           + 묶음 추가
         </button>
