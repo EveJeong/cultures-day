@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Vite 5는 Node 18+ 필요 (Amplify 기본 이미지에 nvm 포함)
+        - nvm use 20 || nvm install 20
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    # Vite 빌드 산출물
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
