@@ -1,15 +1,16 @@
-// 이미지 업로드: 서명서버에서 presigned URL 받아 S3로 직접 PUT (designs/05-infra.md)
-import type { ImageRef } from '../types'
+// 미디어 업로드: 서명서버에서 presigned URL 받아 S3로 직접 PUT (designs/05-infra.md)
+// 이미지·오디오·영상 공용 (contentType만 다름).
+import type { MediaRef } from '../types'
 
 const SIGNER = import.meta.env.VITE_SIGNER_BASE_URL
 const SECRET = import.meta.env.VITE_SIGNER_SECRET
 
 export const isSignerConfigured = Boolean(SIGNER && SECRET)
 
-export async function uploadImage(file: File): Promise<ImageRef> {
+export async function uploadMedia(file: File): Promise<MediaRef> {
   if (!isSignerConfigured) throw new Error('서명서버 미설정')
   const headers = { 'content-type': 'application/json', 'x-api-secret': SECRET }
-  const ext = file.name.split('.').pop() || 'png'
+  const ext = file.name.split('.').pop() || 'bin'
 
   // 1) presigned PUT 발급
   const r1 = await fetch(`${SIGNER}/uploads`, {
@@ -37,5 +38,5 @@ export async function uploadImage(file: File): Promise<ImageRef> {
   if (!r2.ok) throw new Error('조회 URL 발급 실패')
   const { url, expiresAt } = await r2.json()
 
-  return { s3Key, url, expiresAt }
+  return { s3Key, url, expiresAt, contentType: file.type }
 }

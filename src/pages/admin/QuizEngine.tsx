@@ -4,9 +4,17 @@ import {
   awardQuizTeams,
   clearQuestion,
   setCurrentQuestion,
+  setQuizImageIndex,
   setQuizScreen,
 } from '../../lib/admin'
-import type { Game, Question, TeamId } from '../../types'
+import type { Game, Question, QuestionType, TeamId } from '../../types'
+
+const Q_LABEL: Record<QuestionType, string> = {
+  text: '텍스트',
+  image: '사진',
+  images: '사진 N개',
+  audio: '오디오',
+}
 
 const TEAM_IDS: TeamId[] = ['J', 'I', 'L']
 
@@ -57,6 +65,9 @@ function QuestionRunner({
   screen: 'q1' | 'q2' | 'q3'
 }) {
   const teams = useTeams()
+  const gs = useGameState()
+  const imgIdx = gs?.quizImageIndex ?? 0
+  const imgCount = question.promptMedia?.length ?? 0
   const [picked, setPicked] = useState<TeamId[]>([])
   const [points, setPoints] = useState(String(question.points ?? 10))
 
@@ -74,13 +85,31 @@ function QuestionRunner({
   return (
     <div className="space-y-3">
       {/* 문제/정답 미리보기 */}
-      <div className="rounded-2xl bg-pink-50 p-3">
+      <div className="rounded-2xl bg-pink-50 p-3 text-center">
         <div className="font-head text-xs text-pink-500">
-          [{question.category}] {question.kind === 'practice' && '· 연습'}
+          [{question.category}] · {Q_LABEL[question.qType]} {question.kind === 'practice' && '· 연습'}
         </div>
-        <div className="font-display text-xl">{question.promptText}</div>
-        <div className="mt-1 font-body text-sm text-gray-500">정답: {question.answerText}</div>
+        {question.qType === 'text' ? (
+          <div className="font-display text-xl">{question.promptText}</div>
+        ) : (
+          <div className="font-body text-sm text-gray-500">
+            {question.qType === 'images' ? `사진 ${imgCount}장` : Q_LABEL[question.qType]}
+          </div>
+        )}
+        <div className="mt-1 font-body text-sm text-gray-500">
+          정답: {question.answerText}
+          {question.answerMedia ? ' (+미디어)' : ''}
+        </div>
       </div>
+
+      {/* 사진 N개 캐러셀 제어 (공개 화면과 동기화) */}
+      {question.qType === 'images' && imgCount > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button className="btn-mini" onClick={() => setQuizImageIndex(Math.max(0, imgIdx - 1))}>◀</button>
+          <span className="font-head text-sm">{imgIdx + 1} / {imgCount}</span>
+          <button className="btn-mini" onClick={() => setQuizImageIndex(Math.min(imgCount - 1, imgIdx + 1))}>▶</button>
+        </div>
+      )}
 
       {/* 화면 단계 */}
       <div className="flex justify-center gap-2">

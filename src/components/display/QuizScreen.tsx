@@ -1,19 +1,25 @@
 import { useGameState, useQuestions } from '../../lib/game'
+import type { MediaRef } from '../../types'
+
+/** 미디어 렌더 — contentType 따라 img/audio/video (재생 버튼=controls) */
+function DisplayMedia({ media, big }: { media: MediaRef; big?: boolean }) {
+  const c = media.contentType ?? ''
+  const cls = big ? 'max-h-[55vh] rounded-2xl object-contain' : 'max-h-[40vh] rounded-2xl object-contain'
+  if (c.startsWith('video')) return <video src={media.url} controls className={big ? 'max-h-[55vh] rounded-2xl' : 'max-h-[40vh] rounded-2xl'} />
+  if (c.startsWith('audio')) return <audio src={media.url} controls className="w-80 md:w-[28rem]" />
+  return <img src={media.url} alt="" className={cls} />
+}
 
 /** 퀴즈 참가자 화면 q1(문제)·q2(정답)·q3(대기) */
 export default function QuizScreen() {
   const state = useGameState()
   const question = useQuestions().find((q) => q.id === state?.currentQuestionId)
 
-  if (!state || !question) {
-    return <p className="wordart wordart-white text-4xl">준비 중…</p>
-  }
+  if (!state || !question) return <p className="wordart wordart-white text-4xl">준비 중…</p>
+  if (state.quizScreen === 'q3') return <p className="wordart wordart-white text-5xl">준비해주세요!</p>
 
-  const screen = state.quizScreen
-
-  if (screen === 'q3') {
-    return <p className="wordart wordart-white text-5xl">준비해주세요!</p>
-  }
+  const media = question.promptMedia ?? []
+  const idx = Math.min(state.quizImageIndex ?? 0, Math.max(0, media.length - 1))
 
   return (
     <div className="flex w-full max-w-4xl flex-col items-center gap-6 text-center">
@@ -22,21 +28,26 @@ export default function QuizScreen() {
         {question.kind === 'practice' && ' · 연습'}
       </div>
 
-      <div className="flex w-full flex-col items-center gap-4 rounded-3xl bg-white/90 p-10 shadow-2xl">
-        {question.promptImage && (
-          <img src={question.promptImage.url} alt="" className="max-h-[40vh] rounded-2xl object-contain" />
-        )}
-        {question.promptText && (
+      <div className="flex w-full flex-col items-center gap-4 rounded-3xl bg-white/90 p-8 shadow-2xl">
+        {question.qType === 'text' && (
           <p className="font-display text-6xl text-gray-800">{question.promptText}</p>
+        )}
+        {question.qType === 'image' && media[0] && <DisplayMedia media={media[0]} big />}
+        {question.qType === 'audio' && media[0] && <DisplayMedia media={media[0]} />}
+        {question.qType === 'images' && media.length > 0 && (
+          <>
+            <DisplayMedia media={media[idx]} big />
+            <p className="font-head text-2xl text-pink-500">
+              {idx + 1} / {media.length}
+            </p>
+          </>
         )}
       </div>
 
-      {screen === 'q2' && (
+      {state.quizScreen === 'q2' && (
         <div className="flex w-full flex-col items-center gap-3 rounded-3xl bg-yellow-300 p-8 shadow-2xl">
           <p className="font-head text-xl text-pink-700">정답</p>
-          {question.answerImage && (
-            <img src={question.answerImage.url} alt="" className="max-h-[40vh] rounded-2xl object-contain" />
-          )}
+          {question.answerMedia && <DisplayMedia media={question.answerMedia} big />}
           {question.answerText && <p className="wordart wordart-blue text-6xl">{question.answerText}</p>}
         </div>
       )}

@@ -101,7 +101,7 @@ export async function setCurrentQuestion(questionId: string) {
   const d = requireDb()
   await setDoc(
     doc(d, 'state', 'current'),
-    { currentQuestionId: questionId, quizScreen: 'q1' },
+    { currentQuestionId: questionId, quizScreen: 'q1', quizImageIndex: 0 },
     { merge: true },
   )
   await updateDoc(doc(d, 'questions', questionId), { used: true })
@@ -109,6 +109,11 @@ export async function setCurrentQuestion(questionId: string) {
 
 export async function setQuizScreen(quizScreen: QuizScreen) {
   await updateDoc(doc(requireDb(), 'state', 'current'), { quizScreen })
+}
+
+/** 사진 N개 캐러셀 인덱스 */
+export async function setQuizImageIndex(quizImageIndex: number) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { quizImageIndex })
 }
 
 /** 문제 종료 → 목록 대기 */

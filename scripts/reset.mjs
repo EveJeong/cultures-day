@@ -38,7 +38,7 @@ async function main() {
     currentGameId: 'quiz',
     phase: 'intro',
     currentQuestionId: null,
-    quizScreen: 'q1',
+    quizScreen: 'q1', quizImageIndex: 0,
     promptScreen: null,
     promptAssignment: null,
     promptTeamOrder: null,

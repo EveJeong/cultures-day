@@ -21,11 +21,15 @@ export interface User {
   isAdmin: boolean
 }
 
-export interface ImageRef {
+export interface MediaRef {
   s3Key: string
   url: string
   expiresAt: number
+  contentType?: string // image/* | audio/* | video/*
 }
+
+/** 퀴즈 문제 유형 */
+export type QuestionType = 'text' | 'image' | 'images' | 'audio'
 
 export interface Game {
   id: string
@@ -47,10 +51,11 @@ export interface Question {
   gameId: string
   category: '과자이름' | '초성' | '확대샷' | '노래' | '영화'
   kind: 'practice' | 'real'
+  qType: QuestionType
   promptText?: string
-  promptImage?: ImageRef
+  promptMedia?: MediaRef[] // image→1 · images→N · audio→1
   answerText?: string
-  answerImage?: ImageRef
+  answerMedia?: MediaRef // 정답 이미지 또는 영상
   points: number
   used: boolean
   order: number
@@ -101,6 +106,7 @@ export interface GameState {
   // 퀴즈 엔진
   currentQuestionId: string | null
   quizScreen: QuizScreen
+  quizImageIndex: number // images 유형 캐러셀 인덱스
   // 제시어 엔진
   promptScreen: PromptScreen | null
   promptAssignment: Record<TeamId, string> | null
