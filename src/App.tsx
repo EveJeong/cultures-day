@@ -5,6 +5,7 @@ import SpectatorPage from './pages/SpectatorPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import GamesPage from './pages/admin/GamesPage'
 import GameDetailPage from './pages/admin/GameDetailPage'
+import GameRunPage from './pages/admin/GameRunPage'
 import ParticipantsPage from './pages/admin/ParticipantsPage'
 import TeamDetailPage from './pages/admin/TeamDetailPage'
 import DisplayView from './components/display/DisplayView'
@@ -35,6 +36,7 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<GamesPage />} />
         <Route path="games/:id" element={<GameDetailPage />} />
+        <Route path="games/:id/run" element={<GameRunPage />} />
         <Route path="participants" element={<ParticipantsPage />} />
         <Route path="teams/:id" element={<TeamDetailPage />} />
       </Route>

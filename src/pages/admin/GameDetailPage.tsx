@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useGames, useGameState, useScoreLog, useTeams } from '../../lib/game'
-import { finishGame, setCurrentGame } from '../../lib/admin'
+import { useGames, useGameState } from '../../lib/game'
+import { finishGame, reopenGame, setCurrentGame } from '../../lib/admin'
 import { Panel } from './ui'
 import GameForm from './GameForm'
-import { GameRunner } from './ProgressTab'
+import QuizContent from './content/QuizContent'
+import PromptContent from './content/PromptContent'
 
+/** 게임 상세 — 편집(설정·콘텐츠) 전용. 진행은 상단 [게임 진행] → /run */
 export default function GameDetailPage() {
   const { id } = useParams()
   const nav = useNavigate()
   const games = useGames()
   const state = useGameState()
-  const teams = useTeams()
-  const log = useScoreLog()
   const [editing, setEditing] = useState(false)
 
   const game = games.find((g) => g.id === id)
@@ -26,25 +26,11 @@ export default function GameDetailPage() {
     )
   }
 
-  const isRunning = state.currentGameId === game.id
   const finished = (state.finishedGameIds ?? []).includes(game.id)
 
-  // 진행 중이면 GameRunner 화면(자체 헤더 포함)
-  if (isRunning) {
-    return (
-      <GameRunner
-        game={game}
-        state={state}
-        teams={teams}
-        log={log}
-        games={games}
-        onBack={() => nav('/admin')}
-        onFinish={async () => {
-          await finishGame(game.id)
-          nav('/admin')
-        }}
-      />
-    )
+  const run = async () => {
+    await setCurrentGame(game.id)
+    nav(`/admin/games/${game.id}/run`)
   }
 
   return (
@@ -59,18 +45,25 @@ export default function GameDetailPage() {
           <span className="w-14" />
         </div>
 
-        <div className="mt-3 flex justify-center gap-2">
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
           {game.excluded ? (
-            <span className="font-head text-sm text-gray-500">제외된 게임 (목록에서 복구하세요)</span>
+            <span className="font-head text-sm text-gray-500">제외된 게임 — 목록에서 복구하세요</span>
           ) : (
-            <button className="btn-mini bg-pink-500 text-white" onClick={() => setCurrentGame(game.id)}>
-              {finished ? '배점 수정 (다시 진행)' : '게임 진행'}
-            </button>
+            <>
+              <button className="btn-mini bg-pink-500 text-white" onClick={run}>
+                {finished ? '배점 수정 (진행)' : '게임 진행'}
+              </button>
+              {finished ? (
+                <button className="btn-mini" onClick={() => reopenGame(game.id)}>종료 취소</button>
+              ) : (
+                <button className="btn-mini" onClick={() => finishGame(game.id)}>종료</button>
+              )}
+            </>
           )}
         </div>
         {finished && (
           <p className="mt-2 text-center font-body text-xs text-gray-400">
-            종료된 게임 — 진행 시 배점 수정 위주로 사용하세요
+            종료된 게임 — 콘텐츠는 잠기고 배점만 수정 가능
           </p>
         )}
       </Panel>
@@ -92,12 +85,9 @@ export default function GameDetailPage() {
         )}
       </Panel>
 
-      <Panel>
-        <h2 className="mb-1 font-head text-lg text-pink-600">콘텐츠</h2>
-        <p className="font-body text-sm text-gray-400">
-          문제·제시어·이미지 편집은 이 페이지로 통합 예정입니다. (다음 단계)
-        </p>
-      </Panel>
+      {/* 콘텐츠 — 종료 게임은 잠금 */}
+      {!finished && game.engineType === 'quiz' && <QuizContent gameId={game.id} />}
+      {!finished && game.engineType === 'prompt' && <PromptContent gameId={game.id} />}
     </div>
   )
 }
