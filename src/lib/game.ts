@@ -9,6 +9,7 @@ import type {
   ScoreLog,
   Team,
   TeamId,
+  User,
 } from '../types'
 
 /** 진행 상태 단일 문서 (state/current) */
@@ -44,6 +45,11 @@ export function usePromptSets(): PromptSet[] {
 /** 제시어 전체 */
 export function usePrompts(): Prompt[] {
   return useCollection<Prompt>('prompts')
+}
+
+/** 사용자 전체 */
+export function useUsers(): User[] {
+  return useCollection<User>('users')
 }
 
 /** 팀 총점 = 유효(voided=false) scoreLog 합계 */

@@ -1,7 +1,7 @@
-// 게임 정의 관리(CRUD) + 기본 프리셋. (사용자·팀 관리는 추후 A에서 추가)
+// 게임 정의 관리(CRUD) + 기본 프리셋 + 사용자·팀 관리.
 import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Game } from '../types'
+import type { Game, TeamId, User } from '../types'
 
 function requireDb() {
   if (!db) throw new Error('Firestore 미설정')
@@ -33,6 +33,68 @@ export async function loadPresetGames(): Promise<number> {
     added++
   }
   return added
+}
+
+/* ---------- 팀 ---------- */
+
+export async function saveTeam(teamId: TeamId, data: { name: string; color: string }) {
+  await setDoc(doc(requireDb(), 'teams', teamId), { id: teamId, ...data })
+}
+
+/* ---------- 사용자 ---------- */
+
+/** 일괄 등록: 존재하지 않는 이름만 생성. {added, skipped} 반환 */
+export async function addUsers(names: string[], teamId: TeamId): Promise<{ added: number; skipped: number }> {
+  let added = 0
+  let skipped = 0
+  for (const raw of names) {
+    const name = raw.trim()
+    if (!name) continue
+    const ref = doc(requireDb(), 'users', name)
+    if ((await getDoc(ref)).exists()) {
+      skipped++
+      continue
+    }
+    await setDoc(ref, { name, teamId, nickname: null, passwordHash: null, isAdmin: false } satisfies User)
+    added++
+  }
+  return { added, skipped }
+}
+
+export async function setUserTeam(name: string, teamId: TeamId) {
+  await setDoc(doc(requireDb(), 'users', name), { teamId }, { merge: true })
+}
+
+/** 비번 초기화 → 재설정(B) 분기로 */
+export async function resetUserPassword(name: string) {
+  await setDoc(doc(requireDb(), 'users', name), { passwordHash: null }, { merge: true })
+}
+
+export async function deleteUser(name: string) {
+  await deleteDoc(doc(requireDb(), 'users', name))
+}
+
+/** 이름 변경 = 데이터 이관 재생성 (대상 이름 존재 시 거부) */
+export async function renameUser(oldName: string, newName: string): Promise<boolean> {
+  const d = requireDb()
+  const target = newName.trim()
+  if (!target || target === oldName) return false
+  if ((await getDoc(doc(d, 'users', target))).exists()) return false
+  const snap = await getDoc(doc(d, 'users', oldName))
+  if (!snap.exists()) return false
+  const data = snap.data() as User
+  await setDoc(doc(d, 'users', target), { ...data, name: target })
+  await deleteDoc(doc(d, 'users', oldName))
+  return true
+}
+
+/** 운영자 계정 비번 설정/변경 (이름 'admin') */
+export async function setAdminPassword(passwordHash: string) {
+  await setDoc(
+    doc(requireDb(), 'users', 'admin'),
+    { name: 'admin', teamId: 'J', nickname: null, isAdmin: true, passwordHash },
+    { merge: true },
+  )
 }
 
 export const PRESET_GAMES: Game[] = [

@@ -3,6 +3,7 @@ import { useGames } from '../../lib/game'
 import { deleteGame, loadPresetGames, newGameId, saveGame } from '../../lib/manage'
 import type { EngineType, Game, ScoringType } from '../../types'
 import { Field, Panel, inputCls } from './ui'
+import UserTeamPanel from './UserTeamPanel'
 
 const ENGINES: EngineType[] = ['none', 'quiz', 'prompt']
 const SCORINGS: ScoringType[] = ['rank', 'increment', 'free', 'quiz']
@@ -68,6 +69,8 @@ export default function SettingsTab() {
           onClose={() => setEditing(null)}
         />
       )}
+
+      <UserTeamPanel />
     </div>
   )
 }
