@@ -2,6 +2,8 @@
 // 점수는 scoreLog append 단일 출처. 멱등 부여는 결정적 docId로 set (designs/02 §7.5).
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   serverTimestamp,
@@ -38,6 +40,20 @@ export async function setCurrentGame(gameId: string) {
 
 export async function setPhase(phase: Phase) {
   await updateDoc(doc(requireDb(), 'state', 'current'), { phase })
+}
+
+/** 게임 종료 → 완료 표시 */
+export async function finishGame(gameId: string) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    finishedGameIds: arrayUnion(gameId),
+  })
+}
+
+/** 완료 취소(다시 진행 가능) */
+export async function reopenGame(gameId: string) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    finishedGameIds: arrayRemove(gameId),
+  })
 }
 
 const base = (gameId: string, teamId: TeamId) => ({

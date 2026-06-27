@@ -103,6 +103,7 @@ export interface TimerState {
 export interface GameState {
   currentGameId: string
   phase: Phase
+  finishedGameIds?: string[] // '게임 종료'된 게임들 (완료 표시)
   // 퀴즈 엔진
   currentQuestionId: string | null
   quizScreen: QuizScreen

@@ -58,7 +58,7 @@ const games = [
 
 const state = {
   currentGameId: 'quiz',
-  phase: 'intro',
+  phase: 'intro', finishedGameIds: [],
   currentQuestionId: null,
   quizScreen: 'q1', quizImageIndex: 0,
   promptScreen: null,
