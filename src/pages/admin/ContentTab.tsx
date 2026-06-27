@@ -8,7 +8,8 @@ import {
   deletePromptSet,
   deleteQuestion,
 } from '../../lib/content'
-import type { Question } from '../../types'
+import { isSignerConfigured, uploadImage } from '../../lib/upload'
+import type { ImageRef, Question } from '../../types'
 import { Field, Panel, inputCls } from './ui'
 
 const CATEGORIES: Question['category'][] = ['과자이름', '초성', '확대샷', '노래', '영화']
@@ -33,22 +34,30 @@ function QuizQuestions() {
   const [kind, setKind] = useState<'real' | 'practice'>('real')
   const [promptText, setPromptText] = useState('')
   const [answerText, setAnswerText] = useState('')
+  const [promptImage, setPromptImage] = useState<ImageRef | undefined>()
+  const [answerImage, setAnswerImage] = useState<ImageRef | undefined>()
   const [points, setPoints] = useState('10')
 
   const submit = async () => {
-    if (!promptText.trim() || !answerText.trim()) return
+    const hasPrompt = promptText.trim() || promptImage
+    const hasAnswer = answerText.trim() || answerImage
+    if (!hasPrompt || !hasAnswer) return
     await addQuestion({
       gameId: 'quiz',
       category,
       kind,
-      promptText: promptText.trim(),
-      answerText: answerText.trim(),
+      ...(promptText.trim() ? { promptText: promptText.trim() } : {}),
+      ...(promptImage ? { promptImage } : {}),
+      ...(answerText.trim() ? { answerText: answerText.trim() } : {}),
+      ...(answerImage ? { answerImage } : {}),
       points: Number(points) || 10,
       used: false,
       order: questions.length,
     })
     setPromptText('')
     setAnswerText('')
+    setPromptImage(undefined)
+    setAnswerImage(undefined)
   }
 
   return (
@@ -79,23 +88,83 @@ function QuizQuestions() {
           <input className={inputCls} type="number" value={points} onChange={(e) => setPoints(e.target.value)} />
         </Field>
       </div>
+      {isSignerConfigured ? (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <ImageField label="문제 이미지(선택)" value={promptImage} onChange={setPromptImage} />
+          <ImageField label="정답 이미지(선택)" value={answerImage} onChange={setAnswerImage} />
+        </div>
+      ) : (
+        <p className="mt-1 font-body text-xs text-gray-400">
+          ※ 이미지 업로드는 서명서버(VITE_SIGNER_*) 설정 후 활성화
+        </p>
+      )}
+
       <button className="btn-mini mt-2 w-full bg-pink-500 text-white" onClick={submit}>
         문제 추가
       </button>
-      <p className="mt-1 font-body text-xs text-gray-400">※ 이미지(확대샷 등)는 S3 연동 후 추가 예정</p>
 
       <ul className="mt-3 space-y-1">
         {questions.map((q) => (
           <li key={q.id} className="flex items-center justify-between gap-2 rounded-xl bg-pink-50 px-3 py-1.5">
-            <span className="truncate font-body text-sm">
-              <b className="text-pink-600">[{q.category}]</b> {q.promptText} → {q.answerText}
-              {q.kind === 'practice' && <span className="ml-1 text-gray-400">(연습)</span>}
+            <span className="flex min-w-0 items-center gap-2 font-body text-sm">
+              <b className="text-pink-600">[{q.category}]</b>
+              {q.promptImage && <img src={q.promptImage.url} alt="" className="h-8 w-8 rounded object-cover" />}
+              <span className="truncate">{q.promptText} → {q.answerText}</span>
+              {q.answerImage && <img src={q.answerImage.url} alt="" className="h-8 w-8 rounded object-cover" />}
+              {q.kind === 'practice' && <span className="text-gray-400">(연습)</span>}
             </span>
-            <button className="btn-mini" onClick={() => deleteQuestion(q.id)}>삭제</button>
+            <button className="btn-mini shrink-0" onClick={() => deleteQuestion(q.id)}>삭제</button>
           </li>
         ))}
       </ul>
     </Panel>
+  )
+}
+
+function ImageField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value?: ImageRef
+  onChange: (v?: ImageRef) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const handle = async (file?: File) => {
+    if (!file) return
+    setBusy(true)
+    setErr('')
+    try {
+      onChange(await uploadImage(file))
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Field label={label}>
+      {value ? (
+        <div className="flex items-center gap-2">
+          <img src={value.url} alt="" className="h-12 w-12 rounded-lg object-cover" />
+          <button className="btn-mini" onClick={() => onChange(undefined)}>제거</button>
+        </div>
+      ) : (
+        <input
+          type="file"
+          accept="image/*"
+          disabled={busy}
+          className="font-body text-sm"
+          onChange={(e) => handle(e.target.files?.[0])}
+        />
+      )}
+      {busy && <span className="font-body text-xs text-gray-400">업로드 중…</span>}
+      {err && <span className="font-body text-xs text-red-500">{err}</span>}
+    </Field>
   )
 }
 

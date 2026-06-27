@@ -1,0 +1,6 @@
+{
+  "name": "baditbuli-signer",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "S3 presigned URL 발급 Lambda (AWS SDK v3는 nodejs20 런타임 내장)"
+}

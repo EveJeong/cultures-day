@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 바딧불이 야호 - S3 이미지 presigned URL 서명서버
+
+Parameters:
+  ApiSecret:
+    Type: String
+    NoEcho: true
+    Description: 프론트 x-api-secret 값과 동일하게
+  BucketName:
+    Type: String
+    Default: cultures-day-images
+  AllowOrigin:
+    Type: String
+    Default: '*'
+    Description: 운영 시 Vercel 도메인으로 제한 권장
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+  ImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [PUT, GET]
+            AllowedOrigins: ['*']
+            AllowedHeaders: ['*']
+            ExposedHeaders: [ETag]
+            MaxAge: 3000
+
+  SignerFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: src/
+      Environment:
+        Variables:
+          BUCKET: !Ref BucketName
+          API_SECRET: !Ref ApiSecret
+          URL_TTL_SECONDS: '259200'
+          ALLOW_ORIGIN: !Ref AllowOrigin
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref BucketName
+      Events:
+        Uploads:
+          Type: HttpApi
+          Properties: { Path: /uploads, Method: POST }
+        SignGet:
+          Type: HttpApi
+          Properties: { Path: /sign-get, Method: POST }
+        UploadsOptions:
+          Type: HttpApi
+          Properties: { Path: /uploads, Method: OPTIONS }
+        SignGetOptions:
+          Type: HttpApi
+          Properties: { Path: /sign-get, Method: OPTIONS }
+
+Outputs:
+  ApiUrl:
+    Description: 프론트 VITE_SIGNER_BASE_URL 에 넣을 값
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
