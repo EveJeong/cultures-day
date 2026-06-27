@@ -1,20 +1,23 @@
-import RainbowScreen from '../components/RainbowScreen'
-import Logo from '../components/Logo'
-import Leaderboard from '../components/Leaderboard'
+import ScoreBar from '../components/display/ScoreBar'
+import GameView from '../components/display/GameView'
 import { isFirebaseConfigured } from '../lib/firebase'
 
-// TODO(03-display-design): 관전(중립) 진행 페이지 — 현재 게임 진행 뷰 추가 예정
+// 관전(중립) 진행 페이지 — 빔프로젝터용. 개인화 없음.
 export default function SpectatorPage() {
+  if (!isFirebaseConfigured) {
+    return (
+      <div className="rainbow-bg flex min-h-screen items-center justify-center">
+        <p className="wordart wordart-white text-3xl">⚠️ Firebase 미설정</p>
+      </div>
+    )
+  }
+
   return (
-    <RainbowScreen>
-      <Logo size="md" />
-      <p className="wordart wordart-white mt-2 text-3xl">실시간 점수</p>
-      <Leaderboard />
-      {!isFirebaseConfigured && (
-        <p className="mt-2 rounded-xl bg-black/40 px-4 py-2 font-head text-sm text-white">
-          ⚠️ Firebase 미설정
-        </p>
-      )}
-    </RainbowScreen>
+    <div className="rainbow-bg flex min-h-screen w-full flex-col">
+      <ScoreBar />
+      <div className="flex flex-1 items-center justify-center p-6">
+        <GameView />
+      </div>
+    </div>
   )
 }
