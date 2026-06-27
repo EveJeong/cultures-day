@@ -12,9 +12,9 @@ export default function DisplayView({
   showQr?: boolean
 }) {
   return (
-    <div className="rainbow-bg flex min-h-screen w-full flex-col">
+    <div className="rainbow-bg flex h-screen w-full flex-col overflow-hidden">
       <ScoreBar myTeamId={myTeamId} />
-      <div className="flex flex-1 items-center justify-center p-6">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-6">
         <GameView myTeamId={myTeamId} />
       </div>
       {showQr && <QrJoin />}
