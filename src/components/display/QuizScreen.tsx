@@ -27,6 +27,8 @@ export default function QuizScreen() {
   const idx = Math.min(state.quizImageIndex ?? 0, Math.max(0, media.length - 1))
   // 확대샷: 이미지 문제를 화면 거의 꽉 차게
   const zoom = question.category === '확대샷' && (question.qType === 'image' || question.qType === 'images')
+  // 사진/오디오 문제는 정답 화면(q2)에서 문제를 숨김 (텍스트는 유지)
+  const showPrompt = state.quizScreen === 'q1' || question.qType === 'text'
 
   return (
     <div className={`flex w-full flex-col items-center gap-4 text-center ${zoom ? 'max-w-6xl' : 'max-w-4xl gap-6'}`}>
@@ -35,21 +37,23 @@ export default function QuizScreen() {
         {question.kind === 'practice' && ' · 연습'}
       </div>
 
-      <div className={`flex w-full flex-col items-center gap-4 rounded-3xl bg-white/90 shadow-2xl ${zoom ? 'p-2' : 'p-8'}`}>
-        {question.qType === 'text' && (
-          <p className="font-display text-6xl text-gray-800">{question.promptText}</p>
-        )}
-        {question.qType === 'image' && media[0] && <DisplayMedia media={media[0]} big zoom={zoom} />}
-        {question.qType === 'audio' && media[0] && <DisplayMedia media={media[0]} />}
-        {question.qType === 'images' && media.length > 0 && (
-          <>
-            <DisplayMedia media={media[idx]} big zoom={zoom} />
-            <p className="font-head text-2xl text-pink-500">
-              {idx + 1} / {media.length}
-            </p>
-          </>
-        )}
-      </div>
+      {showPrompt && (
+        <div className={`flex w-full flex-col items-center gap-4 rounded-3xl bg-white/90 shadow-2xl ${zoom ? 'p-2' : 'p-8'}`}>
+          {question.qType === 'text' && (
+            <p className="font-display text-6xl text-gray-800">{question.promptText}</p>
+          )}
+          {question.qType === 'image' && media[0] && <DisplayMedia media={media[0]} big zoom={zoom} />}
+          {question.qType === 'audio' && media[0] && <DisplayMedia media={media[0]} />}
+          {question.qType === 'images' && media.length > 0 && (
+            <>
+              <DisplayMedia media={media[idx]} big zoom={zoom} />
+              <p className="font-head text-2xl text-pink-500">
+                {idx + 1} / {media.length}
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {state.quizScreen === 'q2' && (
         <div className="flex w-full flex-col items-center gap-3 rounded-3xl bg-yellow-300 p-8 shadow-2xl">
