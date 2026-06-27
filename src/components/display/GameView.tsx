@@ -1,5 +1,6 @@
 import { useGames, useGameState, useScoreLog, useTeams } from '../../lib/game'
-import type { Game, TeamId } from '../../types'
+import { elapsedSec, fmt, remainingSec, useNow } from '../../lib/timer'
+import type { Game, TeamId, TimerState } from '../../types'
 import Leaderboard from '../Leaderboard'
 import QuizScreen from './QuizScreen'
 import PromptScreen from './PromptScreen'
@@ -15,9 +16,36 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
   if (state.phase === 'result') return <ResultView game={game} myTeamId={myTeamId} />
 
   // playing
-  if (game.engineType === 'quiz') return <QuizScreen />
-  if (game.engineType === 'prompt') return <PromptScreen />
-  return <GenericPlaying game={game} />
+  return (
+    <div className="flex w-full flex-col items-center gap-6">
+      <TimerView timer={state.timer} />
+      {game.engineType === 'quiz' ? (
+        <QuizScreen />
+      ) : game.engineType === 'prompt' ? (
+        <PromptScreen />
+      ) : (
+        <GenericPlaying game={game} />
+      )}
+    </div>
+  )
+}
+
+function TimerView({ timer }: { timer: TimerState }) {
+  const running = timer.status === 'running'
+  const now = useNow(running)
+  if (!timer.mode || timer.status === 'idle') return null
+  const val = timer.mode === 'countdown' ? remainingSec(timer, now) : elapsedSec(timer, now)
+  const danger = timer.mode === 'countdown' && val <= 60
+  return (
+    <div
+      className={`wordart text-7xl ${danger ? 'wordart-blue' : 'wordart-white'} ${
+        timer.status === 'finished' ? 'animate-pulse' : ''
+      }`}
+      style={danger ? { color: '#ff2d2d' } : undefined}
+    >
+      {fmt(val)}
+    </div>
+  )
 }
 
 function IntroView({ game }: { game: Game }) {

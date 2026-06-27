@@ -4,11 +4,16 @@ import {
   awardFree,
   awardIncrement,
   awardRank,
+  pauseTimer,
+  resetTimer,
+  resumeTimer,
   setCurrentGame,
   setPhase,
   setVoided,
+  startTimer,
 } from '../../lib/admin'
-import type { Game, Phase, ScoreLog, Team, TeamId } from '../../types'
+import { elapsedSec, fmt, remainingSec, useNow } from '../../lib/timer'
+import type { Game, GameState, Phase, ScoreLog, Team, TeamId } from '../../types'
 import { Panel } from './ui'
 import QuizEngine from './QuizEngine'
 import PromptEngine from './PromptEngine'
@@ -72,6 +77,11 @@ export default function ProgressTab() {
             </option>
           ))}
         </select>
+      </Panel>
+
+      <Panel>
+        <h2 className="mb-2 font-head text-lg text-pink-600">타이머</h2>
+        <TimerControl game={game} state={state} />
       </Panel>
 
       <Panel>
@@ -200,6 +210,46 @@ function FreeControl({ game, teamName }: { game: Game; teamName: (id: TeamId) =>
       >
         배분
       </button>
+    </div>
+  )
+}
+
+function TimerControl({ game, state }: { game: Game; state: GameState }) {
+  const timer = state.timer
+  const running = timer.status === 'running'
+  const now = useNow(running)
+  const defMode = game.timer?.mode
+  const defDur = game.timer?.durationSec
+  const display = timer.mode
+    ? timer.mode === 'countdown'
+      ? remainingSec(timer, now)
+      : elapsedSec(timer, now)
+    : null
+
+  return (
+    <div className="space-y-2">
+      <div className="text-center font-display text-3xl text-pink-600">
+        {display != null ? fmt(display) : '—'}
+        <span className="ml-2 font-body text-sm text-gray-400">{timer.status}</span>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {defMode && (
+          <button className="btn-mini bg-pink-500 text-white" onClick={() => startTimer(defMode, defDur)}>
+            시작 ({defMode === 'countdown' ? fmt(defDur ?? 0) : '스톱워치'})
+          </button>
+        )}
+        <button className="btn-mini" onClick={() => startTimer('countdown', 60)}>1분</button>
+        <button className="btn-mini" onClick={() => startTimer('stopwatch')}>스톱워치</button>
+        {running && (
+          <button className="btn-mini" onClick={() => pauseTimer(elapsedSec(timer, Date.now()))}>
+            일시정지
+          </button>
+        )}
+        {timer.status === 'paused' && (
+          <button className="btn-mini" onClick={() => resumeTimer()}>재개</button>
+        )}
+        <button className="btn-mini" onClick={() => resetTimer(defMode ?? null)}>리셋</button>
+      </div>
     </div>
   )
 }

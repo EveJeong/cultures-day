@@ -195,3 +195,40 @@ export async function awardPromptTeam(
     promptId,
   })
 }
+
+/* ---------- 타이머 (dot-notation으로 timer만 갱신) ---------- */
+
+export async function startTimer(mode: 'countdown' | 'stopwatch', durationSec?: number) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    'timer.mode': mode,
+    'timer.status': 'running',
+    'timer.durationSec': durationSec ?? null,
+    'timer.startedAt': serverTimestamp(),
+    'timer.accumulatedSec': 0,
+  })
+}
+
+/** 일시정지: 클라이언트가 계산한 경과(초)를 누적에 고정 */
+export async function pauseTimer(elapsedSecValue: number) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    'timer.status': 'paused',
+    'timer.accumulatedSec': elapsedSecValue,
+    'timer.startedAt': null,
+  })
+}
+
+export async function resumeTimer() {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    'timer.status': 'running',
+    'timer.startedAt': serverTimestamp(),
+  })
+}
+
+export async function resetTimer(mode: 'countdown' | 'stopwatch' | null) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), {
+    'timer.mode': mode,
+    'timer.status': 'idle',
+    'timer.accumulatedSec': 0,
+    'timer.startedAt': null,
+  })
+}
