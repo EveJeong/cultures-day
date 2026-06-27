@@ -184,13 +184,13 @@ export function GameRunner({
               </p>
             )}
           </Panel>
-          <TimerPanel game={game} state={state} />
+          {game.timer && <TimerPanel game={game} state={state} />}
         </>
       )}
 
       {phase === 'playing' && (
         <>
-          <TimerPanel game={game} state={state} />
+          {game.timer && <TimerPanel game={game} state={state} />}
           <Panel>
             <h2 className="mb-2 font-head text-lg text-pink-600">{playingTitle(game)}</h2>
             <ScorePanel game={game} teams={teams} />
