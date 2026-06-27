@@ -7,13 +7,21 @@ import {
   setQuizImageIndex,
   setQuizScreen,
 } from '../../lib/admin'
-import type { Game, Question, QuestionType, TeamId } from '../../types'
+import type { Game, MediaRef, Question, QuestionType, TeamId } from '../../types'
 
 const Q_LABEL: Record<QuestionType, string> = {
   text: '텍스트',
   image: '사진',
   images: '사진 N개',
   audio: '오디오',
+}
+
+/** 운영 화면용 미디어 렌더 */
+function AdminMedia({ media }: { media: MediaRef }) {
+  const c = media.contentType ?? ''
+  if (c.startsWith('video')) return <video src={media.url} controls className="max-h-56 rounded-xl" />
+  if (c.startsWith('audio')) return <audio src={media.url} controls className="w-full" />
+  return <img src={media.url} alt="" className="max-h-56 rounded-xl object-contain" />
 }
 
 const TEAM_IDS: TeamId[] = ['J', 'I', 'L']
@@ -67,7 +75,8 @@ function QuestionRunner({
   const teams = useTeams()
   const gs = useGameState()
   const imgIdx = gs?.quizImageIndex ?? 0
-  const imgCount = question.promptMedia?.length ?? 0
+  const media = question.promptMedia ?? []
+  const imgCount = media.length
   const [picked, setPicked] = useState<TeamId[]>([])
   const [points, setPoints] = useState(String(question.points ?? 10))
 
@@ -84,21 +93,34 @@ function QuestionRunner({
 
   return (
     <div className="space-y-3">
-      {/* 문제/정답 미리보기 */}
-      <div className="rounded-2xl bg-pink-50 p-3 text-center">
+      {/* 선택한 문제 — 크게 */}
+      <div className="rounded-2xl bg-white p-4 text-center shadow">
         <div className="font-head text-xs text-pink-500">
           [{question.category}] · {Q_LABEL[question.qType]} {question.kind === 'practice' && '· 연습'}
         </div>
-        {question.qType === 'text' ? (
-          <div className="font-display text-xl">{question.promptText}</div>
-        ) : (
-          <div className="font-body text-sm text-gray-500">
-            {question.qType === 'images' ? `사진 ${imgCount}장` : Q_LABEL[question.qType]}
-          </div>
-        )}
-        <div className="mt-1 font-body text-sm text-gray-500">
-          정답: {question.answerText}
-          {question.answerMedia ? ' (+미디어)' : ''}
+
+        <div className="my-3 flex flex-col items-center gap-2">
+          {question.qType === 'text' && (
+            <p className="font-display text-3xl text-gray-800">{question.promptText}</p>
+          )}
+          {question.qType === 'image' && media[0] && <AdminMedia media={media[0]} />}
+          {question.qType === 'audio' && media[0] && <AdminMedia media={media[0]} />}
+          {question.qType === 'images' && media[imgIdx] && (
+            <>
+              <AdminMedia media={media[imgIdx]} />
+              <span className="font-head text-sm text-pink-500">{imgIdx + 1} / {imgCount}</span>
+            </>
+          )}
+        </div>
+
+        <div className="rounded-xl bg-yellow-100 px-3 py-2">
+          <span className="font-head text-pink-700">정답: </span>
+          <span className="font-display text-xl">{question.answerText}</span>
+          {question.answerMedia && (
+            <div className="mt-2 flex justify-center">
+              <AdminMedia media={question.answerMedia} />
+            </div>
+          )}
         </div>
       </div>
 
