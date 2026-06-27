@@ -1,0 +1,112 @@
+// Firestore 데이터 모델 타입 (designs/04-data-model.md)
+
+export type TeamId = 'J' | 'I' | 'L'
+export type EngineType = 'quiz' | 'prompt' | 'none'
+export type ScoringType = 'quiz' | 'rank' | 'increment' | 'free'
+export type Phase = 'intro' | 'playing' | 'result'
+export type QuizScreen = 'q1' | 'q2' | 'q3'
+export type PromptScreen = 'w1' | 'w2' | 'w3' | 'w4'
+
+export interface Team {
+  id: TeamId
+  name: string
+  color: string
+}
+
+export interface User {
+  name: string
+  teamId: TeamId
+  nickname: string | null
+  passwordHash: string | null
+  isAdmin: boolean
+}
+
+export interface ImageRef {
+  s3Key: string
+  url: string
+  expiresAt: number
+}
+
+export interface Game {
+  id: string
+  name: string
+  description: string
+  scoringExplanation: string
+  engineType: EngineType
+  scoringType: ScoringType
+  totalPoints?: number
+  rankPoints?: { 1: number; 2: number; 3: number }
+  incrementOptions?: number[]
+  rounds?: string[]
+  timer?: { mode: 'countdown' | 'stopwatch'; durationSec?: number }
+  order: number
+}
+
+export interface Question {
+  id: string
+  gameId: string
+  category: '과자이름' | '초성' | '확대샷' | '노래' | '영화'
+  kind: 'practice' | 'real'
+  promptText?: string
+  promptImage?: ImageRef
+  answerText?: string
+  answerImage?: ImageRef
+  points: number
+  used: boolean
+  order: number
+}
+
+export interface PromptSet {
+  id: string
+  gameId: string
+  label?: string
+  order: number
+}
+
+export interface Prompt {
+  id: string
+  setId: string
+  text: string
+  category: string
+  order: number
+}
+
+export interface ScoreLog {
+  id: string
+  gameId: string
+  teamId: TeamId
+  points: number
+  userId?: string
+  questionId?: string
+  promptId?: string
+  round?: string
+  rank?: 1 | 2 | 3
+  voided: boolean
+  createdBy: 'admin'
+  createdAt?: unknown // Firestore Timestamp
+}
+
+export interface TimerState {
+  mode: 'countdown' | 'stopwatch' | null
+  status: 'idle' | 'running' | 'paused' | 'finished'
+  durationSec?: number
+  startedAt?: unknown // Firestore Timestamp
+  accumulatedSec?: number
+}
+
+/** state/current — 진행 상태 단일 문서 */
+export interface GameState {
+  currentGameId: string
+  phase: Phase
+  // 퀴즈 엔진
+  currentQuestionId: string | null
+  quizScreen: QuizScreen
+  // 제시어 엔진
+  promptScreen: PromptScreen | null
+  promptAssignment: Record<TeamId, string> | null
+  promptTeamOrder: TeamId[] | null
+  currentTeamId: TeamId | null
+  currentPromptId: string | null
+  // 타이머
+  timer: TimerState
+}

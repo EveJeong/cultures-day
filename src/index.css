@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    @apply font-body;
+  }
+}
+
+@layer components {
+  /* 통통 튀는 PPT 버튼 */
+  .btn-pop {
+    @apply font-head text-xl px-6 py-3 rounded-2xl bg-white/90 text-pink-600
+           border-4 border-pink-400 shadow-lg transition active:scale-95 hover:-translate-y-0.5;
+  }
+}
+
+@layer utilities {
+  /* 무지개 그라데이션 배경 (애니메이션) */
+  .rainbow-bg {
+    background: linear-gradient(
+      90deg,
+      #ff00cc,
+      #5b6cff,
+      #00e0ff,
+      #33e060,
+      #ffe000,
+      #ff00cc
+    );
+    background-size: 300% 300%;
+    animation: rainbow 14s linear infinite;
+  }
+
+  /* 워드아트: 두꺼운 글자 + 빨강 외곽선 + 그림자 */
+  .wordart {
+    font-family: 'Black Han Sans', sans-serif;
+    -webkit-text-stroke: 3px #ff0000;
+    paint-order: stroke fill;
+    text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.25);
+    letter-spacing: 1px;
+    line-height: 1.1;
+  }
+  .wordart-yellow {
+    color: #ffe000;
+  }
+  .wordart-blue {
+    color: #1a1ae6;
+  }
+  .wordart-white {
+    color: #ffffff;
+    -webkit-text-stroke-color: #3a7bd5;
+  }
+}
+
+@keyframes rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}

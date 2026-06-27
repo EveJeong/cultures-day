@@ -1,0 +1,17 @@
+# dependencies / build
+node_modules/
+dist/
+
+# env (Firebase config 등)
+.env
+.env.local
+
+# tooling
+.idea/
+.claude/
+.venv-rembg/
+
+# TS / Vite build artifacts
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
