@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import type { Game, Phase, QuizScreen, TeamId } from '../types'
+import type { Game, Phase, PromptScreen, QuizScreen, TeamId } from '../types'
 
 function requireDb() {
   if (!db) throw new Error('Firestore 미설정')
@@ -136,4 +136,62 @@ export async function awardQuizTeams(
       }),
     ),
   )
+}
+
+/* ---------- 제시어 진행 엔진 ---------- */
+
+/** 게임 시작: 묶음 랜덤 배정 + 첫 팀/제시어/w1 (designs/02 §4B.4) */
+export async function startPromptGame(
+  assignment: Record<TeamId, string>,
+  teamOrder: TeamId[],
+  firstTeamId: TeamId,
+  firstPromptId: string,
+) {
+  await setDoc(
+    doc(requireDb(), 'state', 'current'),
+    {
+      promptAssignment: assignment,
+      promptTeamOrder: teamOrder,
+      currentTeamId: firstTeamId,
+      currentPromptId: firstPromptId,
+      promptScreen: 'w1',
+    },
+    { merge: true },
+  )
+}
+
+export async function setPromptScreen(promptScreen: PromptScreen) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { promptScreen })
+}
+
+/** 다음 제시어/팀으로 이동 (w1) */
+export async function gotoPrompt(currentTeamId: TeamId, currentPromptId: string) {
+  await setDoc(
+    doc(requireDb(), 'state', 'current'),
+    { currentTeamId, currentPromptId, promptScreen: 'w1' },
+    { merge: true },
+  )
+}
+
+/** 모든 팀 종료 → 결과 단계 */
+export async function finishPromptGame() {
+  await setDoc(
+    doc(requireDb(), 'state', 'current'),
+    { phase: 'result', currentPromptId: null, promptScreen: null },
+    { merge: true },
+  )
+}
+
+/** w4 정답 → 즉시 가산 (팀 단위 멱등 docId) */
+export async function awardPromptTeam(
+  game: Game,
+  promptId: string,
+  teamId: TeamId,
+  points: number,
+) {
+  await setDoc(doc(requireDb(), 'scoreLog', `${game.id}__${promptId}__${teamId}`), {
+    ...base(game.id, teamId),
+    points,
+    promptId,
+  })
 }

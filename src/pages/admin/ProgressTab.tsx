@@ -11,6 +11,7 @@ import {
 import type { Game, Phase, ScoreLog, Team, TeamId } from '../../types'
 import { Panel } from './ui'
 import QuizEngine from './QuizEngine'
+import PromptEngine from './PromptEngine'
 
 const PHASES: Phase[] = ['intro', 'playing', 'result']
 const TEAM_IDS: TeamId[] = ['J', 'I', 'L']
@@ -93,8 +94,7 @@ function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
 
   // 진행 엔진(퀴즈/제시어)은 전용 화면에서 점수 부여
   if (game.engineType === 'quiz') return <QuizEngine game={game} />
-  if (game.engineType === 'prompt')
-    return <p className="font-body text-sm text-gray-400">제시어 진행 엔진 (다음 청크)</p>
+  if (game.engineType === 'prompt') return <PromptEngine game={game} />
 
   if (game.scoringType === 'increment') {
     const opts = game.incrementOptions ?? [10]
