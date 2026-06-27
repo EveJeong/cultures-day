@@ -15,9 +15,13 @@ export function useDocument<T>(path: string, id: string): T | null {
   useEffect(() => {
     if (!db) return
     const ref = doc(db, path, id)
-    const unsub = onSnapshot(ref, (snap) => {
-      setData(snap.exists() ? ({ id: snap.id, ...snap.data() } as T) : null)
-    })
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        setData(snap.exists() ? ({ id: snap.id, ...snap.data() } as T) : null)
+      },
+      (err) => console.error(`[useDocument ${path}/${id}]`, err.message),
+    )
     return unsub
   }, [path, id])
 
@@ -37,9 +41,13 @@ export function useCollection<T>(
   useEffect(() => {
     if (!db) return
     const q = query(collection(db, path), ...constraints)
-    const unsub = onSnapshot(q, (snap) => {
-      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T))
-    })
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T))
+      },
+      (err) => console.error(`[useCollection ${path}]`, err.message),
+    )
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, key])
