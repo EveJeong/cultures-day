@@ -144,6 +144,15 @@ export async function setVoided(scoreLogId: string, voided: boolean) {
   await updateDoc(doc(requireDb(), 'scoreLog', scoreLogId), { voided })
 }
 
+/** 보너스 점수 — 게임과 무관, 사유 기록 (gameId='bonus') */
+export async function awardBonus(teamId: TeamId, points: number, reason: string) {
+  await addDoc(collection(requireDb(), 'scoreLog'), {
+    ...base('bonus', teamId),
+    points,
+    ...(reason ? { reason } : {}),
+  })
+}
+
 /* ---------- 퀴즈 진행 엔진 ---------- */
 
 /** 문제 출제: 현재 문제로 띄우고(q1) used 마킹 (designs/02 §4.10) */

@@ -88,6 +88,7 @@ export interface ScoreLog {
   promptId?: string
   round?: string
   rank?: 1 | 2 | 3
+  reason?: string // 보너스 점수 사유
   voided: boolean
   createdBy: 'admin'
   createdAt?: unknown // Firestore Timestamp

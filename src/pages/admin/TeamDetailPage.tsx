@@ -96,7 +96,11 @@ export default function TeamDetailPage() {
           <div className="space-y-1">
             {history.map((e) => (
               <div key={e.id} className="flex items-center justify-between rounded-lg bg-pink-50 px-3 py-1.5 font-body text-sm">
-                <span>{games.find((g) => g.id === e.gameId)?.name ?? e.gameId}</span>
+                <span>
+                  {e.gameId === 'bonus'
+                    ? `🎁 보너스${e.reason ? ` · ${e.reason}` : ''}`
+                    : (games.find((g) => g.id === e.gameId)?.name ?? e.gameId)}
+                </span>
                 <b className="text-pink-600">{e.points > 0 ? `+${e.points}` : e.points}</b>
               </div>
             ))}
