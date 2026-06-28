@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useGameState, useQuestions, useTeams } from '../../lib/game'
+import { useGameState, useQuestions, useTeams, useUsers } from '../../lib/game'
 import {
-  awardQuizTeams,
+  awardQuizUser,
   setCurrentQuestion,
   setPhase,
   setQuizImageIndex,
   setQuizScreen,
 } from '../../lib/admin'
-import type { Game, MediaRef, Question, TeamId } from '../../types'
+import type { Game, MediaRef, Question } from '../../types'
 
 /** 운영 화면용 미디어 렌더 */
 function AdminMedia({ media }: { media: MediaRef }) {
@@ -63,7 +63,8 @@ function QuestionRunner({
   imgIdx: number
 }) {
   const teams = useTeams()
-  const [picked, setPicked] = useState<TeamId[]>([])
+  const users = useUsers().filter((u) => !u.isAdmin)
+  const [pickedUser, setPickedUser] = useState<string | null>(null)
   const [points, setPoints] = useState(String(question.points ?? 10))
 
   const idx = questions.findIndex((q) => q.id === question.id)
@@ -71,12 +72,10 @@ function QuestionRunner({
   const media = question.promptMedia ?? []
   const isPractice = question.kind === 'practice'
 
-  const toggle = (id: TeamId) =>
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
-
   const register = async () => {
-    if (!isPractice && picked.length > 0) {
-      await awardQuizTeams(game, question.id, picked, Number(points) || question.points)
+    if (!isPractice && pickedUser) {
+      const u = users.find((x) => x.name === pickedUser)
+      if (u) await awardQuizUser(game, question.id, u.name, u.teamId, Number(points) || question.points)
     }
     await setQuizScreen('q3')
   }
@@ -135,17 +134,8 @@ function QuestionRunner({
 
       {screen === 'q2' && !isPractice && (
         <div className="space-y-2 rounded-2xl border-2 border-pink-100 p-3">
-          <p className="font-head text-sm text-pink-600">정답 팀 선택 (복수 가능)</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {teams.map((t) => (
-              <button
-                key={t.id}
-                className={`btn-mini ${picked.includes(t.id) ? 'bg-pink-500 text-white' : ''}`}
-                onClick={() => toggle(t.id)}
-              >
-                {t.name}
-              </button>
-            ))}
+          <div className="flex items-center justify-between">
+            <p className="font-head text-sm text-pink-600">정답자 선택 (1명)</p>
             <input
               type="number"
               className="w-20 rounded-xl border-2 border-pink-200 p-1 font-body"
@@ -153,8 +143,32 @@ function QuestionRunner({
               onChange={(e) => setPoints(e.target.value)}
             />
           </div>
-          <button className="btn-mini w-full bg-pink-500 text-white" onClick={register}>
-            등록 ({picked.length}팀 · 각 {points}점) →
+          {teams.map((t) => {
+            const members = users.filter((u) => u.teamId === t.id)
+            if (members.length === 0) return null
+            return (
+              <div key={t.id} className="space-y-1">
+                <p className="font-head text-xs" style={{ color: t.color }}>{t.name}</p>
+                <div className="flex flex-wrap gap-1">
+                  {members.map((u) => (
+                    <button
+                      key={u.name}
+                      className={`btn-mini ${pickedUser === u.name ? 'bg-pink-500 text-white' : ''}`}
+                      onClick={() => setPickedUser(u.name)}
+                    >
+                      {u.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+          <button
+            className="btn-mini w-full bg-pink-500 text-white"
+            disabled={!pickedUser}
+            onClick={register}
+          >
+            {pickedUser ? `${pickedUser} 정답 등록 (${points}점) →` : '정답자를 선택하세요'}
           </button>
         </div>
       )}

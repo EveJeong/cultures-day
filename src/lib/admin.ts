@@ -98,11 +98,13 @@ const base = (gameId: string, teamId: TeamId) => ({
   createdAt: serverTimestamp(),
 })
 
-/** 순위형: 팀별 등수 → 사전 배점. round 단위 멱등(set). */
+/** 순위형: 팀별 등수 → 사전 배점. round 단위 멱등(set).
+ *  repUserIds[팀]가 있으면 그 대표자(userId)에게 개인 귀속. */
 export async function awardRank(
   game: Game,
   ranks: Partial<Record<TeamId, 1 | 2 | 3>>,
   round = 'main',
+  repUserIds?: Partial<Record<TeamId, string>>,
 ) {
   const rp = game.rankPoints
   if (!rp) throw new Error('rankPoints 없음')
@@ -115,6 +117,7 @@ export async function awardRank(
         points: rp[r],
         rank: r,
         round,
+        ...(repUserIds?.[teamId] ? { userId: repUserIds[teamId] } : {}),
       }),
     )
   await Promise.all(writes)
@@ -184,22 +187,41 @@ export async function clearQuestion() {
   )
 }
 
-/** 정답 등록(팀 단위, 멱등 docId). 개인 단위는 사용자 관리 후 확장. */
-export async function awardQuizTeams(
+/** 정답 등록(개인 단위): 문제당 정답자 1명 → 그 팀이 배점 + 개인 귀속.
+ *  문제 단위 멱등(set) — 재선택 시 정답자 교체. */
+export async function awardQuizUser(
   game: Game,
   questionId: string,
-  teams: TeamId[],
+  userId: string,
+  teamId: TeamId,
   points: number,
 ) {
-  await Promise.all(
-    teams.map((teamId) =>
-      setDoc(doc(requireDb(), 'scoreLog', `${game.id}__${questionId}__${teamId}`), {
-        ...base(game.id, teamId),
-        points,
-        questionId,
-      }),
-    ),
-  )
+  await setDoc(doc(requireDb(), 'scoreLog', `${game.id}__${questionId}`), {
+    ...base(game.id, teamId),
+    points,
+    questionId,
+    userId,
+  })
+}
+
+/** 정답 등록 취소(문제 단위) */
+export async function clearQuizAward(game: Game, questionId: string) {
+  await deleteDoc(doc(requireDb(), 'scoreLog', `${game.id}__${questionId}`))
+}
+
+/** MVP 선정 → 고정 보너스 자동(팀 가산 + 개인 귀속). 팀 단위 멱등(set). */
+export async function setMvp(game: Game, teamId: TeamId, userId: string) {
+  await setDoc(doc(requireDb(), 'scoreLog', `${game.id}__mvp__${teamId}`), {
+    ...base(game.id, teamId),
+    points: game.mvpPoints ?? 50,
+    userId,
+    mvp: true,
+  })
+}
+
+/** MVP 해제 */
+export async function clearMvp(game: Game, teamId: TeamId) {
+  await deleteDoc(doc(requireDb(), 'scoreLog', `${game.id}__mvp__${teamId}`))
 }
 
 /* ---------- 제시어 진행 엔진 ---------- */

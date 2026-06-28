@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useGameState, useGames, useScoreLog, useTeams } from '../../lib/game'
+import { useGameState, useGames, useReps, useScoreLog, useTeams } from '../../lib/game'
 import {
   awardFree,
   awardIncrement,
@@ -280,6 +280,16 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
   const [ranks, setRanks] = useState<Record<TeamId, 1 | 2 | 3>>({})
   const [round, setRound] = useState(game.rounds?.[0] ?? 'main')
   const rp = game.rankPoints
+  const reps = useReps()
+
+  // 현재 종목(round)의 팀별 대표자 → 개인 귀속용 매핑 + 표시
+  const repFor = (teamId: TeamId) =>
+    reps.find((r) => r.gameId === game.id && r.round === round && r.teamId === teamId)?.userId
+  const repUserIds: Partial<Record<TeamId, string>> = {}
+  teams.forEach((t) => {
+    const u = repFor(t.id)
+    if (u) repUserIds[t.id] = u
+  })
 
   return (
     <div className="space-y-2">
@@ -290,7 +300,10 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
       )}
       {teams.map((t) => (
         <div key={t.id} className="flex items-center gap-2">
-          <span className="w-16 truncate font-head">{t.name}</span>
+          <span className="w-24 truncate font-head">
+            {t.name}
+            {repFor(t.id) && <span className="ml-1 text-xs text-gray-400">· {repFor(t.id)}</span>}
+          </span>
           {([1, 2, 3] as const).map((r) => (
             <button
               key={r}
@@ -302,7 +315,10 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
           ))}
         </div>
       ))}
-      <button className="btn-mini w-full bg-pink-500 text-white" onClick={() => awardRank(game, ranks, round)}>
+      <button
+        className="btn-mini w-full bg-pink-500 text-white"
+        onClick={() => awardRank(game, ranks, round, repUserIds)}
+      >
         순위 확정 ({round})
       </button>
     </div>

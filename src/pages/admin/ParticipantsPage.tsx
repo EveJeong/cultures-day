@@ -158,6 +158,7 @@ function ParticipantsSection() {
   const users = useUsers().filter((u) => !u.isAdmin)
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? id
 
+  const nav = useNavigate()
   const [name, setName] = useState('')
   const [teamId, setTeamId] = useState('')
   const effectiveTeam = teams.some((t) => t.id === teamId) ? teamId : (teams[0]?.id ?? '')
@@ -185,12 +186,16 @@ function ParticipantsSection() {
       <ul className="mt-3 space-y-1">
         {users.map((u) => (
           <li key={u.name} className="flex items-center gap-2 rounded-lg bg-pink-50 px-3 py-1.5">
-            <span className="min-w-0 flex-1 truncate font-body text-sm">
+            <button
+              className="min-w-0 flex-1 truncate text-left font-body text-sm"
+              onClick={() => nav(`/u/${encodeURIComponent(u.name)}`)}
+            >
               {u.name}
               {u.nickname && <span className="text-gray-400"> · {u.nickname}</span>}
               <span className="ml-1 text-xs text-pink-500">[{teamName(u.teamId)}]</span>
               {!u.passwordHash && <span className="ml-1 text-xs text-gray-400">미가입</span>}
-            </span>
+            </button>
+            <button className="btn-mini" onClick={() => nav(`/u/${encodeURIComponent(u.name)}`)}>상세</button>
             <button className="btn-mini" onClick={() => deleteUser(u.name)}>삭제</button>
           </li>
         ))}

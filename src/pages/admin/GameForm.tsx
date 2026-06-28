@@ -28,6 +28,7 @@ export default function GameForm({
   const [rank3, setRank3] = useState(String(game?.rankPoints?.[3] ?? ''))
   const [increment, setIncrement] = useState(game?.incrementOptions?.join(', ') ?? '')
   const [rounds, setRounds] = useState(game?.rounds?.join(', ') ?? '')
+  const [mvpPoints, setMvpPoints] = useState(game?.mvpPoints != null ? String(game.mvpPoints) : '')
   const [timerMode, setTimerMode] = useState(game?.timer?.mode ?? 'none')
   const [timerDur, setTimerDur] = useState(game?.timer?.durationSec != null ? String(game.timer.durationSec) : '')
 
@@ -49,6 +50,9 @@ export default function GameForm({
       data.incrementOptions = increment.split(',').map((s) => Number(s.trim())).filter((n) => !isNaN(n))
     const roundsArr = rounds.split(',').map((s) => s.trim()).filter(Boolean)
     if (roundsArr.length) data.rounds = roundsArr
+    // MVP 가능 게임(퀴즈 아님 + 종목 없음)만 mvpPoints 저장
+    if (engineType !== 'quiz' && !roundsArr.length && mvpPoints !== '')
+      data.mvpPoints = Number(mvpPoints)
     if (timerMode !== 'none')
       data.timer = {
         mode: timerMode as 'countdown' | 'stopwatch',
@@ -92,7 +96,10 @@ export default function GameForm({
         {scoringType === 'free' && (
           <Field label="총배점 (옵션)"><input className={inputCls} type="number" value={totalPoints} onChange={(e) => setTotalPoints(e.target.value)} /></Field>
         )}
-        <div className="col-span-2"><Field label="세부 라운드 (쉼표, 옵션)"><input className={inputCls} value={rounds} onChange={(e) => setRounds(e.target.value)} placeholder="루미큐브, 로보77" /></Field></div>
+        <div className="col-span-2"><Field label="종목 (쉼표, 있으면 종목별 대표자·등수)"><input className={inputCls} value={rounds} onChange={(e) => setRounds(e.target.value)} placeholder="루미큐브, 로보77, 할리갈리" /></Field></div>
+        {engineType !== 'quiz' && rounds.trim() === '' && (
+          <Field label="MVP 보너스 점수 (옵션)"><input className={inputCls} type="number" value={mvpPoints} onChange={(e) => setMvpPoints(e.target.value)} placeholder="50" /></Field>
+        )}
         <Field label="타이머">
           <select className={inputCls} value={timerMode} onChange={(e) => setTimerMode(e.target.value as 'none' | 'countdown' | 'stopwatch')}>
             <option value="none">없음</option>

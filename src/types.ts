@@ -42,10 +42,20 @@ export interface Game {
   totalPoints?: number
   rankPoints?: { 1: number; 2: number; 3: number }
   incrementOptions?: number[]
-  rounds?: string[]
+  rounds?: string[] // 종목 목록(있으면 종목제 게임 — 종목별 대표자·등수)
+  mvpPoints?: number // MVP 고정 보너스 점수(MVP 가능 게임)
   timer?: { mode: 'countdown' | 'stopwatch'; durationSec?: number }
   order: number
   excluded?: boolean // 시작 전 진행 제외(되돌림 가능)
+}
+
+/** 종목 대표자 — 팀장이 채점 전에 등록 */
+export interface Rep {
+  id: string // `${gameId}__${roundSlug}__${teamId}`
+  gameId: string
+  round: string
+  teamId: TeamId
+  userId: string
 }
 
 export interface Question {
@@ -89,6 +99,7 @@ export interface ScoreLog {
   round?: string
   rank?: 1 | 2 | 3
   reason?: string // 보너스 점수 사유
+  mvp?: boolean // MVP 보너스 항목
   voided: boolean
   createdBy: 'admin'
   createdAt?: unknown // Firestore Timestamp

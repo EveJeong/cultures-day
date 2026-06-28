@@ -6,6 +6,7 @@ import type {
   Prompt,
   PromptSet,
   Question,
+  Rep,
   ScoreLog,
   Team,
   TeamId,
@@ -50,6 +51,50 @@ export function usePrompts(): Prompt[] {
 /** 사용자 전체 */
 export function useUsers(): User[] {
   return useCollection<User>('users')
+}
+
+/** 종목 대표자 전체 */
+export function useReps(): Rep[] {
+  return useCollection<Rep>('reps')
+}
+
+/* ---------- 개인 기여도 집계 (userId 귀속 항목) ---------- */
+
+const mine = (log: ScoreLog[], name: string) => log.filter((e) => !e.voided && e.userId === name)
+
+/** 개인 귀속 점수 합 */
+export function userTotal(log: ScoreLog[], name: string): number {
+  return mine(log, name).reduce((s, e) => s + (e.points ?? 0), 0)
+}
+
+/** 내가 맞춘 퀴즈 항목 (questionId 보유) */
+export function userQuizzes(log: ScoreLog[], name: string): ScoreLog[] {
+  return mine(log, name).filter((e) => e.questionId)
+}
+
+/** 내 MVP 항목 */
+export function userMvps(log: ScoreLog[], name: string): ScoreLog[] {
+  return mine(log, name).filter((e) => e.mvp)
+}
+
+export interface UserEvent {
+  gameId: string
+  round: string
+  teamId: TeamId
+  rank?: 1 | 2 | 3
+  points?: number
+}
+
+/** 내가 대표자로 참가한 종목 + (채점됐으면) 등수 */
+export function userEvents(reps: Rep[], log: ScoreLog[], name: string): UserEvent[] {
+  return reps
+    .filter((r) => r.userId === name)
+    .map((r) => {
+      const scored = log.find(
+        (e) => !e.voided && e.gameId === r.gameId && e.round === r.round && e.teamId === r.teamId && e.rank,
+      )
+      return { gameId: r.gameId, round: r.round, teamId: r.teamId, rank: scored?.rank, points: scored?.points }
+    })
 }
 
 /** 팀 총점 = 유효(voided=false) scoreLog 합계 */

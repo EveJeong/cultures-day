@@ -8,7 +8,10 @@ import GameDetailPage from './pages/admin/GameDetailPage'
 import GameRunPage from './pages/admin/GameRunPage'
 import ParticipantsPage from './pages/admin/ParticipantsPage'
 import TeamDetailPage from './pages/admin/TeamDetailPage'
+import ParticipantDetailPage from './pages/ParticipantDetailPage'
+import LeaderPanel from './pages/LeaderPanel'
 import DisplayView from './components/display/DisplayView'
+import ParticipantNav from './components/ParticipantNav'
 import ClosedScreen from './components/ClosedScreen'
 import { getSession } from './lib/auth'
 import { useAppConfig } from './lib/remoteConfig'
@@ -17,7 +20,13 @@ import { useAppConfig } from './lib/remoteConfig'
 function Home() {
   const s = getSession()
   if (s?.role === 'admin') return <Navigate to="/admin" replace />
-  if (s?.role === 'participant') return <DisplayView myTeamId={s.teamId} />
+  if (s?.role === 'participant')
+    return (
+      <>
+        <DisplayView myTeamId={s.teamId} />
+        <ParticipantNav session={s} />
+      </>
+    )
   return <MainPage />
 }
 
@@ -33,6 +42,8 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/spectator" element={<SpectatorPage />} />
+      <Route path="/u/:name" element={<ParticipantDetailPage />} />
+      <Route path="/leader" element={<LeaderPanel />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<GamesPage />} />
         <Route path="games/:id" element={<GameDetailPage />} />
