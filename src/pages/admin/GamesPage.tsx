@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGames, useGameState } from '../../lib/game'
 import { loadPresetGames, setGameExcluded } from '../../lib/manage'
+import { setWaiting } from '../../lib/admin'
 import type { Game } from '../../types'
 import { Panel } from './ui'
 import GameForm from './GameForm'
@@ -29,7 +30,7 @@ export default function GamesPage() {
   const statusOf = (g: Game) => {
     if (g.excluded) return { label: '제외', cls: 'bg-gray-300 text-gray-600' }
     if (finished.has(g.id)) return { label: '종료', cls: 'bg-gray-200 text-gray-500' }
-    if (state?.currentGameId === g.id) return { label: '진행중', cls: 'bg-pink-500 text-white' }
+    if (!state?.waiting && state?.currentGameId === g.id) return { label: '진행중', cls: 'bg-pink-500 text-white' }
     return { label: '예정', cls: 'bg-pink-100 text-pink-600' }
   }
 
@@ -39,6 +40,11 @@ export default function GamesPage() {
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-head text-lg text-pink-600">게임 관리 ({games.length})</h2>
           <div className="flex flex-wrap gap-2">
+            {state?.waiting ? (
+              <button className="btn-mini bg-pink-500 text-white" onClick={() => setWaiting(false)}>▶ 대기 해제</button>
+            ) : (
+              <button className="btn-mini" onClick={() => setWaiting(true)}>🛋️ 대기 화면</button>
+            )}
             {sel.size > 0 ? (
               <>
                 <button className="btn-mini" onClick={() => excludeSelected(true)}>선택 제외 ({sel.size})</button>
@@ -50,6 +56,11 @@ export default function GamesPage() {
             <button className="btn-mini bg-pink-500 text-white" onClick={() => setAdding(true)}>+ 게임 추가</button>
           </div>
         </div>
+        {state?.waiting && (
+          <p className="mb-2 rounded-xl bg-pink-100 px-3 py-1.5 font-head text-sm text-pink-600">
+            🛋️ 대기 화면 표시 중 — 게임 진행 시 자동 해제
+          </p>
+        )}
 
         <ul className="space-y-1">
           {games.map((g) => {

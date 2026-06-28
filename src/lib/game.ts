@@ -69,8 +69,7 @@ export interface RankedTeam {
   rank: number
 }
 
-export function rankedTeams(teams: Team[], log: ScoreLog[]): RankedTeam[] {
-  const totals = teamTotals(log)
+function rankByTotals(teams: Team[], totals: Record<TeamId, number>): RankedTeam[] {
   const sorted = [...teams].sort((a, b) => (totals[b.id] ?? 0) - (totals[a.id] ?? 0))
   let lastScore = Number.POSITIVE_INFINITY
   let lastRank = 0
@@ -81,4 +80,32 @@ export function rankedTeams(teams: Team[], log: ScoreLog[]): RankedTeam[] {
     lastRank = rank
     return { team, score, rank }
   })
+}
+
+export function rankedTeams(teams: Team[], log: ScoreLog[]): RankedTeam[] {
+  return rankByTotals(teams, teamTotals(log))
+}
+
+export interface RankedTeamDelta extends RankedTeam {
+  gained: number // 직전 게임으로 얻은 점수
+  prevRank: number // 직전 게임 전 순위
+}
+
+/** 직전 게임(lastGameId)으로 인한 점수/순위 변동 포함 랭킹 */
+export function rankedTeamsWithDelta(
+  teams: Team[],
+  log: ScoreLog[],
+  lastGameId?: string,
+): RankedTeamDelta[] {
+  const cur = teamTotals(log)
+  const prev = teamTotals(lastGameId ? log.filter((e) => e.gameId !== lastGameId) : log)
+  const prevRank: Record<string, number> = {}
+  rankByTotals(teams, prev).forEach((r) => {
+    prevRank[r.team.id] = r.rank
+  })
+  return rankByTotals(teams, cur).map((r) => ({
+    ...r,
+    gained: (cur[r.team.id] ?? 0) - (prev[r.team.id] ?? 0),
+    prevRank: prevRank[r.team.id] ?? r.rank,
+  }))
 }

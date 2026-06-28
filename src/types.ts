@@ -103,8 +103,9 @@ export interface TimerState {
 
 /** state/current — 진행 상태 단일 문서 */
 export interface GameState {
-  currentGameId: string
+  currentGameId: string // 진행 중 또는 대기 시 '직전 게임'
   phase: Phase
+  waiting?: boolean // 진행 중 게임 없는 대기 상태
   finishedGameIds?: string[] // '게임 종료'된 게임들 (완료 표시)
   // 퀴즈 엔진
   currentQuestionId: string | null

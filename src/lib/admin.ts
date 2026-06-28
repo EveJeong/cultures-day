@@ -25,6 +25,7 @@ export async function setCurrentGame(gameId: string) {
     {
       currentGameId: gameId,
       phase: 'intro',
+      waiting: false,
       currentQuestionId: null,
       quizScreen: 'q1',
       promptScreen: null,
@@ -40,6 +41,11 @@ export async function setCurrentGame(gameId: string) {
 
 export async function setPhase(phase: Phase) {
   await updateDoc(doc(requireDb(), 'state', 'current'), { phase })
+}
+
+/** 대기 상태 진입/해제 (currentGameId는 직전 게임으로 유지) */
+export async function setWaiting(waiting: boolean) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { waiting })
 }
 
 /** 게임 종료 → 완료 표시 */
