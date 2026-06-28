@@ -4,6 +4,7 @@ import type { Game, TeamId, TimerState } from '../../types'
 import Leaderboard from '../Leaderboard'
 import QuizScreen from './QuizScreen'
 import PromptScreen from './PromptScreen'
+import { RosterTeamView, RosterEventView } from './RosterView'
 
 /** phase × engineType 디스패처 (designs/03 §3) */
 export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
@@ -20,7 +21,11 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
     <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3">
       <TimerView timer={state.timer} />
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
-        {game.engineType === 'quiz' ? (
+        {game.format === 'roster-team' ? (
+          <RosterTeamView game={game} />
+        ) : game.format === 'roster-event' ? (
+          <RosterEventView game={game} />
+        ) : game.engineType === 'quiz' ? (
           <QuizScreen />
         ) : game.engineType === 'prompt' ? (
           <PromptScreen />

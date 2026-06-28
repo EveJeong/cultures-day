@@ -17,13 +17,17 @@ export function repId(gameId: string, round: string, teamId: TeamId): string {
   return `${gameId}__${roundSlug(round)}__${teamId}`
 }
 
-/** 대표자 지정/변경 (멱등) */
-export async function setRep(gameId: string, round: string, teamId: TeamId, userId: string) {
+/** 종목 출전 로스터 지정/변경 (멱등). 빈 배열이면 삭제. */
+export async function setRoster(gameId: string, round: string, teamId: TeamId, userIds: string[]) {
   const id = repId(gameId, round, teamId)
-  await setDoc(doc(requireDb(), 'reps', id), { id, gameId, round, teamId, userId } satisfies Rep)
+  if (userIds.length === 0) {
+    await deleteDoc(doc(requireDb(), 'reps', id))
+    return
+  }
+  await setDoc(doc(requireDb(), 'reps', id), { id, gameId, round, teamId, userIds } satisfies Rep)
 }
 
-/** 대표자 해제 */
+/** 로스터 해제 */
 export async function clearRep(gameId: string, round: string, teamId: TeamId) {
   await deleteDoc(doc(requireDb(), 'reps', repId(gameId, round, teamId)))
 }

@@ -29,6 +29,8 @@ export default function GameForm({
   const [increment, setIncrement] = useState(game?.incrementOptions?.join(', ') ?? '')
   const [rounds, setRounds] = useState(game?.rounds?.join(', ') ?? '')
   const [mvpPoints, setMvpPoints] = useState(game?.mvpPoints != null ? String(game.mvpPoints) : '')
+  const [format, setFormat] = useState<'' | 'roster-team' | 'roster-event'>(game?.format ?? '')
+  const [rosterSize, setRosterSize] = useState(game?.rosterSize != null ? String(game.rosterSize) : '')
   const [timerMode, setTimerMode] = useState(game?.timer?.mode ?? 'none')
   const [timerDur, setTimerDur] = useState(game?.timer?.durationSec != null ? String(game.timer.durationSec) : '')
 
@@ -50,6 +52,10 @@ export default function GameForm({
       data.incrementOptions = increment.split(',').map((s) => Number(s.trim())).filter((n) => !isNaN(n))
     const roundsArr = rounds.split(',').map((s) => s.trim()).filter(Boolean)
     if (roundsArr.length) data.rounds = roundsArr
+    if (format) {
+      data.format = format
+      data.rosterSize = Number(rosterSize) || 1
+    }
     // MVP 가능 게임(퀴즈 아님 + 종목 없음)만 mvpPoints 저장
     if (engineType !== 'quiz' && !roundsArr.length && mvpPoints !== '')
       data.mvpPoints = Number(mvpPoints)
@@ -97,6 +103,19 @@ export default function GameForm({
           <Field label="총배점 (옵션)"><input className={inputCls} type="number" value={totalPoints} onChange={(e) => setTotalPoints(e.target.value)} /></Field>
         )}
         <div className="col-span-2"><Field label="종목 (쉼표, 있으면 종목별 대표자·등수)"><input className={inputCls} value={rounds} onChange={(e) => setRounds(e.target.value)} placeholder="루미큐브, 로보77, 할리갈리" /></Field></div>
+        <Field label="게임 구분 (로스터 출전)">
+          <select className={inputCls} value={format} onChange={(e) => setFormat(e.target.value as '' | 'roster-team' | 'roster-event')}>
+            <option value="">일반</option>
+            <option value="roster-team">팀별 진행 (릴레이)</option>
+            <option value="roster-event">종목별 진행</option>
+          </select>
+        </Field>
+        {format && (
+          <Field label="종목별 출전자 수"><input className={inputCls} type="number" value={rosterSize} onChange={(e) => setRosterSize(e.target.value)} placeholder="2" /></Field>
+        )}
+        {format && rounds.trim() === '' && (
+          <p className="col-span-2 font-body text-xs text-pink-500">※ 로스터 게임은 종목을 1개 이상 입력하세요.</p>
+        )}
         {engineType !== 'quiz' && rounds.trim() === '' && (
           <Field label="MVP 보너스 점수 (옵션)"><input className={inputCls} type="number" value={mvpPoints} onChange={(e) => setMvpPoints(e.target.value)} placeholder="50" /></Field>
         )}

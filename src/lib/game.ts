@@ -85,10 +85,10 @@ export interface UserEvent {
   points?: number
 }
 
-/** 내가 대표자로 참가한 종목 + (채점됐으면) 등수 */
+/** 내가 출전한 종목 + (채점됐으면) 등수 */
 export function userEvents(reps: Rep[], log: ScoreLog[], name: string): UserEvent[] {
   return reps
-    .filter((r) => r.userId === name)
+    .filter((r) => r.userIds?.includes(name))
     .map((r) => {
       const scored = log.find(
         (e) => !e.voided && e.gameId === r.gameId && e.round === r.round && e.teamId === r.teamId && e.rank,

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useGames, useGameState, useReps, useScoreLog, useTeams, useUsers } from '../lib/game'
-import { setRep, clearRep } from '../lib/reps'
+import { setRoster } from '../lib/reps'
 import { setMvp, clearMvp } from '../lib/admin'
 import { getSession } from '../lib/auth'
 import type { Game, Team, User } from '../types'
@@ -59,19 +59,20 @@ export default function LeaderPanel() {
                 <div className="space-y-3">
                   {eventGames.map((g) => (
                     <div key={g.id} className="rounded-2xl bg-pink-50 p-3">
-                      <p className="mb-1 font-head text-sm text-pink-700">{g.name}</p>
-                      <div className="space-y-1">
+                      <p className="mb-1 font-head text-sm text-pink-700">
+                        {g.name} <span className="text-xs text-gray-400">· 종목별 {g.rosterSize ?? 1}명</span>
+                      </p>
+                      <div className="space-y-2">
                         {(g.rounds ?? []).map((round) => {
                           const cur = reps.find((r) => r.gameId === g.id && r.round === round && r.teamId === team.id)
                           return (
-                            <RepRow
+                            <RosterRow
                               key={round}
                               label={round}
                               members={members}
-                              value={cur?.userId ?? ''}
-                              onChange={(uid) =>
-                                uid ? setRep(g.id, round, team.id, uid) : clearRep(g.id, round, team.id)
-                              }
+                              max={g.rosterSize ?? 1}
+                              selected={cur?.userIds ?? []}
+                              onChange={(ids) => setRoster(g.id, round, team.id, ids)}
                             />
                           )
                         })}
@@ -110,24 +111,46 @@ export default function LeaderPanel() {
   )
 }
 
-function RepRow({
+function RosterRow({
   label,
   members,
-  value,
+  max,
+  selected,
   onChange,
 }: {
   label: string
   members: User[]
-  value: string
-  onChange: (userId: string) => void
+  max: number
+  selected: string[]
+  onChange: (userIds: string[]) => void
 }) {
+  const toggle = (name: string) => {
+    if (selected.includes(name)) onChange(selected.filter((n) => n !== name))
+    else if (max === 1) onChange([name])
+    else if (selected.length < max) onChange([...selected, name])
+  }
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-24 shrink-0 truncate font-body text-sm text-gray-600">{label}</span>
-      <select className={`${inputCls} flex-1`} value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">— 미지정 —</option>
-        {members.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
-      </select>
+    <div className="rounded-xl bg-white/70 p-2">
+      <div className="mb-1 flex items-center justify-between">
+        <span className="font-body text-sm text-gray-600">{label}</span>
+        <span className="font-head text-xs text-gray-400">{selected.length}/{max}명</span>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {members.map((m) => {
+          const on = selected.includes(m.name)
+          const full = max > 1 && !on && selected.length >= max
+          return (
+            <button
+              key={m.name}
+              disabled={full}
+              className={`btn-mini ${on ? 'bg-pink-500 text-white' : ''} ${full ? 'opacity-40' : ''}`}
+              onClick={() => toggle(m.name)}
+            >
+              {m.name}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

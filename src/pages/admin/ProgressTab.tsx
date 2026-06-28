@@ -9,6 +9,8 @@ import {
   resetTimer,
   resumeTimer,
   setCurrentGame,
+  setCurrentRound,
+  setCurrentTeam,
   setPhase,
   setVoided,
   startTimer,
@@ -191,6 +193,7 @@ export function GameRunner({
       {phase === 'playing' && (
         <>
           {game.timer && <TimerPanel game={game} state={state} />}
+          {game.format && <RosterControl game={game} state={state} teams={teams} />}
           <Panel>
             <h2 className="mb-2 font-head text-lg text-pink-600">{playingTitle(game)}</h2>
             <ScorePanel game={game} teams={teams} />
@@ -276,19 +279,61 @@ function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
   return null
 }
 
+/** 로스터 게임 진행 포인터 — 현재 진행 팀(roster-team) / 종목(roster-event) 선택 → 빔 화면 동기화 */
+function RosterControl({ game, state, teams }: { game: Game; state: GameState; teams: Team[] }) {
+  if (game.format === 'roster-team') {
+    const cur = state.currentTeamId
+    return (
+      <Panel>
+        <h2 className="mb-2 font-head text-lg text-pink-600">진행 팀 (화면 표시)</h2>
+        <div className="flex flex-wrap gap-2">
+          {teams.map((t) => (
+            <button
+              key={t.id}
+              className={`btn-mini ${cur === t.id ? 'text-white' : ''}`}
+              style={cur === t.id ? { background: t.color } : undefined}
+              onClick={() => setCurrentTeam(t.id)}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      </Panel>
+    )
+  }
+  const rounds = game.rounds ?? []
+  const cur = state.currentRound
+  return (
+    <Panel>
+      <h2 className="mb-2 font-head text-lg text-pink-600">진행 종목 (화면 표시)</h2>
+      <div className="flex flex-wrap gap-2">
+        {rounds.map((r) => (
+          <button
+            key={r}
+            className={`btn-mini ${cur === r ? 'bg-pink-500 text-white' : ''}`}
+            onClick={() => setCurrentRound(r)}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+    </Panel>
+  )
+}
+
 function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
   const [ranks, setRanks] = useState<Record<TeamId, 1 | 2 | 3>>({})
   const [round, setRound] = useState(game.rounds?.[0] ?? 'main')
   const rp = game.rankPoints
   const reps = useReps()
 
-  // 현재 종목(round)의 팀별 대표자 → 개인 귀속용 매핑 + 표시
-  const repFor = (teamId: TeamId) =>
-    reps.find((r) => r.gameId === game.id && r.round === round && r.teamId === teamId)?.userId
+  // 현재 종목(round)의 팀별 출전 로스터 → 표시 + (1명일 때만) 개인 귀속
+  const rosterFor = (teamId: TeamId) =>
+    reps.find((r) => r.gameId === game.id && r.round === round && r.teamId === teamId)?.userIds ?? []
   const repUserIds: Partial<Record<TeamId, string>> = {}
   teams.forEach((t) => {
-    const u = repFor(t.id)
-    if (u) repUserIds[t.id] = u
+    const ids = rosterFor(t.id)
+    if (ids.length === 1) repUserIds[t.id] = ids[0]
   })
 
   return (
@@ -300,9 +345,11 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
       )}
       {teams.map((t) => (
         <div key={t.id} className="flex items-center gap-2">
-          <span className="w-24 truncate font-head">
+          <span className="w-28 truncate font-head">
             {t.name}
-            {repFor(t.id) && <span className="ml-1 text-xs text-gray-400">· {repFor(t.id)}</span>}
+            {rosterFor(t.id).length > 0 && (
+              <span className="ml-1 text-xs text-gray-400">· {rosterFor(t.id).join(', ')}</span>
+            )}
           </span>
           {([1, 2, 3] as const).map((r) => (
             <button

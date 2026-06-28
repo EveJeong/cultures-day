@@ -44,18 +44,21 @@ export interface Game {
   incrementOptions?: number[]
   rounds?: string[] // 종목 목록(있으면 종목제 게임 — 종목별 대표자·등수)
   mvpPoints?: number // MVP 고정 보너스 점수(MVP 가능 게임)
+  // 종목별 출전 로스터 게임 구분: 팀별 진행(roster-team) / 종목별 진행(roster-event)
+  format?: 'roster-team' | 'roster-event'
+  rosterSize?: number // 종목별 출전자 수(기본 1)
   timer?: { mode: 'countdown' | 'stopwatch'; durationSec?: number }
   order: number
   excluded?: boolean // 시작 전 진행 제외(되돌림 가능)
 }
 
-/** 종목 대표자 — 팀장이 채점 전에 등록 */
+/** 종목 출전 로스터 — 팀장이 종목별 출전자(N명)를 등록 */
 export interface Rep {
   id: string // `${gameId}__${roundSlug}__${teamId}`
   gameId: string
   round: string
   teamId: TeamId
-  userId: string
+  userIds: string[]
 }
 
 export interface Question {
@@ -129,6 +132,8 @@ export interface GameState {
   promptTeamOrder: TeamId[] | null
   currentTeamId: TeamId | null
   currentPromptId: string | null
+  // 로스터 게임 진행 포인터(currentTeamId 공용, currentRound = 현재 종목)
+  currentRound?: string | null
   // 타이머
   timer: TimerState
 }

@@ -35,10 +35,19 @@ export async function setCurrentGame(gameId: string) {
       promptTeamOrder: null,
       currentTeamId: null,
       currentPromptId: null,
+      currentRound: null,
       timer: { mode: null, status: 'idle' },
     },
     { merge: true },
   )
+}
+
+/** 로스터 진행 포인터 — 현재 진행 팀 / 현재 진행 종목 */
+export async function setCurrentTeam(teamId: TeamId | null) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { currentTeamId: teamId })
+}
+export async function setCurrentRound(round: string | null) {
+  await updateDoc(doc(requireDb(), 'state', 'current'), { currentRound: round })
 }
 
 export async function setPhase(phase: Phase) {
