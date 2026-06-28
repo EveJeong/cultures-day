@@ -5,7 +5,9 @@ import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
+  getDocs,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -46,6 +48,32 @@ export async function setPhase(phase: Phase) {
 /** 대기 상태 진입/해제 (currentGameId는 직전 게임으로 유지) */
 export async function setWaiting(waiting: boolean) {
   await updateDoc(doc(requireDb(), 'state', 'current'), { waiting })
+}
+
+/** 게임 진행 초기화 — 점수 이력(scoreLog) 전체 삭제 + 진행/종료 상태 리셋.
+ *  게임 정의·순서·콘텐츠·팀·참가자는 보존(merge). */
+export async function resetProgress() {
+  const d = requireDb()
+  const snap = await getDocs(collection(d, 'scoreLog'))
+  await Promise.all(snap.docs.map((s) => deleteDoc(s.ref)))
+  await setDoc(
+    doc(d, 'state', 'current'),
+    {
+      phase: 'intro',
+      waiting: false,
+      finishedGameIds: [],
+      currentQuestionId: null,
+      quizScreen: 'q1',
+      quizImageIndex: 0,
+      promptScreen: null,
+      promptAssignment: null,
+      promptTeamOrder: null,
+      currentTeamId: null,
+      currentPromptId: null,
+      timer: { mode: null, status: 'idle' },
+    },
+    { merge: true },
+  )
 }
 
 /** 게임 종료 → 완료 표시 */

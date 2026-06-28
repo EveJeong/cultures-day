@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGames, useGameState } from '../../lib/game'
 import { loadPresetGames, setGameExcluded } from '../../lib/manage'
-import { setWaiting } from '../../lib/admin'
+import { resetProgress, setWaiting } from '../../lib/admin'
+import { getUser, sha256 } from '../../lib/auth'
 import type { Game } from '../../types'
-import { Panel } from './ui'
+import { Panel, inputCls } from './ui'
 import GameForm from './GameForm'
 
 export default function GamesPage() {
@@ -93,6 +94,91 @@ export default function GamesPage() {
           }}
         />
       )}
+
+      <ResetPanel />
     </div>
+  )
+}
+
+/** 게임 진행 초기화 — 운영자 비밀번호 확인 후 점수/진행 상태만 리셋 */
+function ResetPanel() {
+  const [confirming, setConfirming] = useState(false)
+  const [pw, setPw] = useState('')
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const doReset = async () => {
+    setBusy(true)
+    setErr('')
+    try {
+      const admin = await getUser('admin')
+      const h = await sha256(pw)
+      if (!admin || admin.passwordHash !== h) {
+        setErr('운영자 비밀번호가 일치하지 않습니다.')
+        return
+      }
+      await resetProgress()
+      setConfirming(false)
+      setPw('')
+      setDone(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Panel>
+      <h2 className="font-head text-lg text-red-500">게임 진행 초기화</h2>
+      <p className="mt-1 font-body text-sm text-gray-500">
+        모든 점수 이력과 진행/종료 상태를 초기화합니다.
+        <br />
+        <b>게임 설정·순서·콘텐츠·참가자는 그대로 유지</b>됩니다.
+      </p>
+
+      {!confirming ? (
+        <button
+          className="btn-mini mt-2 border-red-300 bg-red-100 text-red-600"
+          onClick={() => {
+            setConfirming(true)
+            setDone(false)
+            setErr('')
+          }}
+        >
+          게임 진행 초기화
+        </button>
+      ) : (
+        <div className="mt-2 space-y-2 rounded-2xl border-2 border-red-200 p-3">
+          <p className="font-head text-sm text-red-500">
+            정말 초기화할까요? 되돌릴 수 없습니다. 운영자 비밀번호를 입력하세요.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              className={`${inputCls} flex-1`}
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              placeholder="운영자 비밀번호"
+              onKeyDown={(e) => e.key === 'Enter' && pw && doReset()}
+            />
+            <button className="btn-mini bg-red-500 text-white" disabled={busy || !pw} onClick={doReset}>
+              초기화 확인
+            </button>
+            <button
+              className="btn-mini"
+              onClick={() => {
+                setConfirming(false)
+                setPw('')
+                setErr('')
+              }}
+            >
+              취소
+            </button>
+          </div>
+          {err && <p className="font-body text-sm text-red-500">{err}</p>}
+        </div>
+      )}
+      {done && <p className="mt-2 font-body text-sm text-green-600">✅ 초기화 완료!</p>}
+    </Panel>
   )
 }
