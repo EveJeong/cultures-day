@@ -1,4 +1,4 @@
-import { useGames, useGameState, useScoreLog, useTeams } from '../../lib/game'
+import { eventNames, useGames, useGameState, useScoreLog, useTeams } from '../../lib/game'
 import { elapsedSec, fmt, remainingSec, useNow } from '../../lib/timer'
 import type { Game, TeamId, TimerState } from '../../types'
 import Leaderboard from '../Leaderboard'
@@ -24,7 +24,7 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {game.format === 'roster-team' ? (
           <RosterTeamView game={game} />
-        ) : game.format === 'roster-event' ? (
+        ) : game.format === 'roster-event' || eventNames(game).length > 0 ? (
           <RosterEventView game={game} />
         ) : game.engineType === 'quiz' ? (
           <QuizScreen />

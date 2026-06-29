@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { eventNames, eventWinCondition, relayLeaderboard, useGameState, useGames, useReps, useScoreLog, useTeams, useTimes } from '../../lib/game'
 import { saveTeamTime, clearTeamTime } from '../../lib/times'
 import {
@@ -194,7 +194,9 @@ export function GameRunner({
       {phase === 'playing' && (
         <>
           {game.timer && <TimerPanel game={game} state={state} />}
-          {game.format && <RosterControl game={game} state={state} teams={teams} />}
+          {(game.format === 'roster-team' || eventNames(game).length > 0) && (
+            <RosterControl game={game} state={state} teams={teams} />
+          )}
           <Panel>
             <h2 className="mb-2 font-head text-lg text-pink-600">{playingTitle(game)}</h2>
             <ScorePanel game={game} teams={teams} />
@@ -386,9 +388,12 @@ function RosterControl({ game, state, teams }: { game: Game; state: GameState; t
 }
 
 function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
+  const state = useGameState()
   const rounds = eventNames(game)
+  // 현재 종목은 '진행 종목(화면 표시)'과 공유 — 위 RosterControl에서 변경
+  const round = state?.currentRound ?? rounds[0] ?? 'main'
   const [ranks, setRanks] = useState<Record<TeamId, 1 | 2 | 3>>({})
-  const [round, setRound] = useState(rounds[0] ?? 'main')
+  useEffect(() => setRanks({}), [round]) // 종목 바뀌면 등수 선택 초기화
   const rp = game.rankPoints
   const reps = useReps()
   const win = eventWinCondition(game, round)
@@ -405,9 +410,9 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
   return (
     <div className="space-y-2">
       {rounds.length > 0 && (
-        <select className="w-full rounded-xl border-2 border-pink-200 p-2 font-body" value={round} onChange={(e) => setRound(e.target.value)}>
-          {rounds.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
+        <p className="rounded-xl bg-pink-50 px-3 py-1.5 font-head text-sm text-pink-600">
+          현재 종목: <b>{round}</b> <span className="text-xs text-gray-400">(위 ‘진행 종목’에서 변경)</span>
+        </p>
       )}
       {win && <p className="rounded-xl bg-pink-50 px-3 py-1.5 font-body text-sm text-pink-700">🏆 승리 조건: {win}</p>}
       {teams.map((t) => (
