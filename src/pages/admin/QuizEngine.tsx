@@ -7,14 +7,16 @@ import {
   setQuizImageIndex,
   setQuizScreen,
 } from '../../lib/admin'
+import { useMediaUrl } from '../../lib/mediaUrl'
 import type { Game, MediaRef, Question } from '../../types'
 
 /** 운영 화면용 미디어 렌더 */
 function AdminMedia({ media }: { media: MediaRef }) {
+  const { url, onError } = useMediaUrl(media)
   const c = media.contentType ?? ''
-  if (c.startsWith('video')) return <video src={media.url} controls className="max-h-56 rounded-xl" />
-  if (c.startsWith('audio')) return <audio src={media.url} controls className="w-full" />
-  return <img src={media.url} alt="" className="max-h-56 rounded-xl object-contain" />
+  if (c.startsWith('video')) return <video src={url} onError={onError} controls className="max-h-56 rounded-xl" />
+  if (c.startsWith('audio')) return <audio src={url} onError={onError} controls className="w-full" />
+  return <img src={url} onError={onError} alt="" className="max-h-56 rounded-xl object-contain" />
 }
 
 /** 퀴즈 진행 — 순서대로 자동 진행, 단계별 화면 하나씩 (designs/02 §4) */

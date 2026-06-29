@@ -29,14 +29,19 @@ export async function uploadMedia(file: File): Promise<MediaRef> {
   })
   if (!put.ok) throw new Error('S3 업로드 실패')
 
-  // 3) presigned GET(3일) 발급
-  const r2 = await fetch(`${SIGNER}/sign-get`, {
+  // 3) presigned GET 발급
+  const { url, expiresAt } = await signGetUrl(s3Key)
+  return { s3Key, url, expiresAt, contentType: file.type }
+}
+
+/** s3Key로 presigned GET URL 재발급 (만료된 미디어 새로고침용) */
+export async function signGetUrl(s3Key: string): Promise<{ url: string; expiresAt: number }> {
+  if (!isSignerConfigured) throw new Error('서명서버 미설정')
+  const r = await fetch(`${SIGNER}/sign-get`, {
     method: 'POST',
-    headers,
+    headers: { 'content-type': 'application/json', 'x-api-secret': SECRET },
     body: JSON.stringify({ s3Key }),
   })
-  if (!r2.ok) throw new Error('조회 URL 발급 실패')
-  const { url, expiresAt } = await r2.json()
-
-  return { s3Key, url, expiresAt, contentType: file.type }
+  if (!r.ok) throw new Error('조회 URL 발급 실패')
+  return r.json()
 }

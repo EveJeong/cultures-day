@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { uploadMedia } from '../../../lib/upload'
+import { useMediaUrl } from '../../../lib/mediaUrl'
 import type { MediaRef } from '../../../types'
 import { Field } from '../ui'
 
 export function MediaPreview({ media, className }: { media: MediaRef; className?: string }) {
+  const { url, onError } = useMediaUrl(media)
   const c = media.contentType ?? ''
-  if (c.startsWith('video')) return <video src={media.url} controls className={className ?? 'h-16 rounded'} />
-  if (c.startsWith('audio')) return <audio src={media.url} controls className="w-40" />
-  return <img src={media.url} alt="" className={className ?? 'h-12 w-12 rounded-lg object-cover'} />
+  if (c.startsWith('video')) return <video src={url} onError={onError} controls className={className ?? 'h-16 rounded'} />
+  if (c.startsWith('audio')) return <audio src={url} onError={onError} controls className="w-40" />
+  return <img src={url} onError={onError} alt="" className={className ?? 'h-12 w-12 rounded-lg object-cover'} />
 }
 
 export function MediaField({

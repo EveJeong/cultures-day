@@ -1,14 +1,16 @@
 import { useGameState, useQuestions } from '../../lib/game'
+import { useMediaUrl } from '../../lib/mediaUrl'
 import type { MediaRef } from '../../types'
 
 /** 미디어 렌더 — 가용 영역에 맞춤. fill=true면 작은 원본도 높이에 맞춰 확대(확대샷). */
 function DisplayMedia({ media, fill, allowAudio }: { media: MediaRef; fill?: boolean; allowAudio?: boolean }) {
+  const { url, onError } = useMediaUrl(media)
   const c = media.contentType ?? ''
-  if (c.startsWith('video')) return <video src={media.url} controls className="max-h-full max-w-full rounded-2xl" />
+  if (c.startsWith('video')) return <video src={url} onError={onError} controls className="max-h-full max-w-full rounded-2xl" />
   // 오디오: 관전(빔)만 재생 허용, 사용자 화면은 안내만 표시
   if (c.startsWith('audio'))
     return allowAudio ? (
-      <audio src={media.url} controls className="w-80 md:w-[28rem]" />
+      <audio src={url} onError={onError} controls className="w-80 md:w-[28rem]" />
     ) : (
       <div className="flex flex-col items-center gap-2 text-pink-500">
         <span className="text-7xl md:text-8xl">🎧</span>
@@ -18,7 +20,7 @@ function DisplayMedia({ media, fill, allowAudio }: { media: MediaRef; fill?: boo
   const imgCls = fill
     ? 'h-full w-full rounded-2xl object-contain' // 업스케일(작은 원본도 크게)
     : 'max-h-full max-w-full rounded-2xl object-contain' // 축소만(원본 유지)
-  return <img src={media.url} alt="" className={imgCls} />
+  return <img src={url} onError={onError} alt="" className={imgCls} />
 }
 
 /** 퀴즈 참가자 화면 q1(문제)·q2(정답)·q3(대기) */
