@@ -42,14 +42,22 @@ export interface Game {
   totalPoints?: number
   rankPoints?: { 1: number; 2: number; 3: number }
   incrementOptions?: number[]
-  rounds?: string[] // 종목 목록(있으면 종목제 게임 — 종목별 대표자·등수)
+  events?: GameEvent[] // 종목(이름·승리조건·인원수). 있으면 종목제 게임
+  rounds?: string[] // (레거시) 종목 이름 목록 — events로 대체됨
   mvpPoints?: number // MVP 고정 보너스 점수(MVP 가능 게임)
   // 종목별 출전 로스터 게임 구분: 팀별 진행(roster-team) / 종목별 진행(roster-event)
   format?: 'roster-team' | 'roster-event'
-  rosterSize?: number // 종목별 출전자 수(기본 1)
+  rosterSize?: number // (레거시) 종목 공통 출전자 수 — 종목별 rosterSize로 대체됨
   timer?: { mode: 'countdown' | 'stopwatch'; durationSec?: number }
   order: number
   excluded?: boolean // 시작 전 진행 제외(되돌림 가능)
+}
+
+/** 종목 — 이름·승리 조건·참가 인원 수 */
+export interface GameEvent {
+  name: string
+  winCondition?: string
+  rosterSize?: number // 종목별 출전 인원(기본 1)
 }
 
 /** 종목 출전 로스터 — 팀장이 종목별 출전자(N명)를 등록 */

@@ -2,6 +2,7 @@ import { orderBy } from 'firebase/firestore'
 import { useDocument, useCollection } from './useFirestore'
 import type {
   Game,
+  GameEvent,
   GameState,
   Prompt,
   PromptSet,
@@ -13,6 +14,24 @@ import type {
   TeamTime,
   User,
 } from '../types'
+
+/* ---------- 종목(events) 접근 — 레거시 rounds 폴백 ---------- */
+
+/** 게임의 종목 목록 (events 우선, 없으면 레거시 rounds에서 변환) */
+export function gameEvents(game: Game): GameEvent[] {
+  if (game.events?.length) return game.events
+  if (game.rounds?.length) return game.rounds.map((name) => ({ name }))
+  return []
+}
+export function eventNames(game: Game): string[] {
+  return gameEvents(game).map((e) => e.name)
+}
+export function eventRosterSize(game: Game, roundName: string): number {
+  return gameEvents(game).find((e) => e.name === roundName)?.rosterSize ?? game.rosterSize ?? 1
+}
+export function eventWinCondition(game: Game, roundName: string): string | undefined {
+  return gameEvents(game).find((e) => e.name === roundName)?.winCondition
+}
 
 /** 진행 상태 단일 문서 (state/current) */
 export function useGameState(): GameState | null {

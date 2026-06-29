@@ -1,4 +1,4 @@
-import { relayLeaderboard, useGameState, useReps, useTeams, useTimes, useUsers } from '../../lib/game'
+import { eventNames, eventWinCondition, relayLeaderboard, useGameState, useReps, useTeams, useTimes, useUsers } from '../../lib/game'
 import { elapsedSec, fmt, useNow } from '../../lib/timer'
 import type { Game, Rep, User } from '../../types'
 
@@ -17,7 +17,7 @@ export function RosterTeamView({ game }: { game: Game }) {
   const users = useUsers()
   const reps = useReps()
   const times = useTimes()
-  const rounds = game.rounds ?? []
+  const rounds = eventNames(game)
   const team = teams.find((t) => t.id === state?.currentTeamId)
   const running = state?.timer.status === 'running'
   const now = useNow(running)
@@ -79,14 +79,18 @@ export function RosterEventView({ game }: { game: Game }) {
   const teams = useTeams()
   const users = useUsers()
   const reps = useReps()
-  const round = state?.currentRound ?? game.rounds?.[0] ?? ''
+  const round = state?.currentRound ?? eventNames(game)[0] ?? ''
+  const win = round ? eventWinCondition(game, round) : undefined
 
   return (
     <div className="flex h-full w-full max-w-5xl flex-col items-center justify-center gap-4">
       <h1 className="wordart wordart-yellow text-4xl md:text-5xl">{game.name}</h1>
       {round ? (
-        <div className="rounded-full bg-white/90 px-10 py-2 shadow-xl">
-          <span className="font-display text-4xl text-pink-600">🎯 {round}</span>
+        <div className="flex flex-col items-center gap-1">
+          <div className="rounded-full bg-white/90 px-10 py-2 shadow-xl">
+            <span className="font-display text-4xl text-pink-600">🎯 {round}</span>
+          </div>
+          {win && <p className="rounded-full bg-white/80 px-4 py-1 font-head text-lg text-gray-600">🏆 {win}</p>}
         </div>
       ) : (
         <p className="wordart wordart-white text-2xl">진행 종목을 선택하세요</p>

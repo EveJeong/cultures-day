@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useGames, useGameState, useReps, useScoreLog, useTeams, useUsers } from '../lib/game'
+import { eventNames, eventRosterSize, eventWinCondition, useGames, useGameState, useReps, useScoreLog, useTeams, useUsers } from '../lib/game'
 import { setRoster } from '../lib/reps'
 import { setMvp, clearMvp } from '../lib/admin'
 import { getSession } from '../lib/auth'
@@ -24,9 +24,9 @@ export default function LeaderPanel() {
   const members = users.filter((u) => u.teamId === team?.id && !u.isAdmin)
   const finished = new Set(state?.finishedGameIds ?? [])
 
-  const eventGames = games.filter((g) => g.rounds?.length && !g.excluded && !finished.has(g.id))
+  const eventGames = games.filter((g) => eventNames(g).length > 0 && !g.excluded && !finished.has(g.id))
   const mvpGames = games.filter(
-    (g) => g.engineType !== 'quiz' && !g.rounds?.length && (finished.has(g.id) || state?.currentGameId === g.id),
+    (g) => g.engineType !== 'quiz' && eventNames(g).length === 0 && (finished.has(g.id) || state?.currentGameId === g.id),
   )
 
   return (
@@ -59,18 +59,17 @@ export default function LeaderPanel() {
                 <div className="space-y-3">
                   {eventGames.map((g) => (
                     <div key={g.id} className="rounded-2xl bg-pink-50 p-3">
-                      <p className="mb-1 font-head text-sm text-pink-700">
-                        {g.name} <span className="text-xs text-gray-400">· 종목별 {g.rosterSize ?? 1}명</span>
-                      </p>
+                      <p className="mb-1 font-head text-sm text-pink-700">{g.name}</p>
                       <div className="space-y-2">
-                        {(g.rounds ?? []).map((round) => {
+                        {eventNames(g).map((round) => {
                           const cur = reps.find((r) => r.gameId === g.id && r.round === round && r.teamId === team.id)
                           return (
                             <RosterRow
                               key={round}
                               label={round}
+                              win={eventWinCondition(g, round)}
                               members={members}
-                              max={g.rosterSize ?? 1}
+                              max={eventRosterSize(g, round)}
                               selected={cur?.userIds ?? []}
                               onChange={(ids) => setRoster(g.id, round, team.id, ids)}
                             />
@@ -113,12 +112,14 @@ export default function LeaderPanel() {
 
 function RosterRow({
   label,
+  win,
   members,
   max,
   selected,
   onChange,
 }: {
   label: string
+  win?: string
   members: User[]
   max: number
   selected: string[]
@@ -132,7 +133,10 @@ function RosterRow({
   return (
     <div className="rounded-xl bg-white/70 p-2">
       <div className="mb-1 flex items-center justify-between">
-        <span className="font-body text-sm text-gray-600">{label}</span>
+        <span className="font-body text-sm text-gray-600">
+          {label}
+          {win && <span className="ml-1 text-xs text-gray-400">🏆 {win}</span>}
+        </span>
         <span className="font-head text-xs text-gray-400">{selected.length}/{max}명</span>
       </div>
       <div className="flex flex-wrap gap-1">

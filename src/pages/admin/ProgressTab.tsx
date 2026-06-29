@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { relayLeaderboard, useGameState, useGames, useReps, useScoreLog, useTeams, useTimes } from '../../lib/game'
+import { eventNames, eventWinCondition, relayLeaderboard, useGameState, useGames, useReps, useScoreLog, useTeams, useTimes } from '../../lib/game'
 import { saveTeamTime, clearTeamTime } from '../../lib/times'
 import {
   awardFree,
@@ -365,7 +365,7 @@ function RosterControl({ game, state, teams }: { game: Game; state: GameState; t
       </Panel>
     )
   }
-  const rounds = game.rounds ?? []
+  const rounds = eventNames(game)
   const cur = state.currentRound
   return (
     <Panel>
@@ -386,10 +386,12 @@ function RosterControl({ game, state, teams }: { game: Game; state: GameState; t
 }
 
 function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
+  const rounds = eventNames(game)
   const [ranks, setRanks] = useState<Record<TeamId, 1 | 2 | 3>>({})
-  const [round, setRound] = useState(game.rounds?.[0] ?? 'main')
+  const [round, setRound] = useState(rounds[0] ?? 'main')
   const rp = game.rankPoints
   const reps = useReps()
+  const win = eventWinCondition(game, round)
 
   // 현재 종목(round)의 팀별 출전 로스터 → 표시 + (1명일 때만) 개인 귀속
   const rosterFor = (teamId: TeamId) =>
@@ -402,11 +404,12 @@ function RankControl({ game, teams }: { game: Game; teams: Team[] }) {
 
   return (
     <div className="space-y-2">
-      {game.rounds && game.rounds.length > 0 && (
+      {rounds.length > 0 && (
         <select className="w-full rounded-xl border-2 border-pink-200 p-2 font-body" value={round} onChange={(e) => setRound(e.target.value)}>
-          {game.rounds.map((r) => <option key={r} value={r}>{r}</option>)}
+          {rounds.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       )}
+      {win && <p className="rounded-xl bg-pink-50 px-3 py-1.5 font-body text-sm text-pink-700">🏆 승리 조건: {win}</p>}
       {teams.map((t) => (
         <div key={t.id} className="flex items-center gap-2">
           <span className="w-28 truncate font-head">
