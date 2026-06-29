@@ -9,9 +9,11 @@ import WaitingScreen from './WaitingScreen'
 export default function DisplayView({
   myTeamId,
   showQr,
+  allowAudio,
 }: {
   myTeamId?: TeamId | null
   showQr?: boolean
+  allowAudio?: boolean // 관전(빔)만 오디오 재생 허용
 }) {
   const state = useGameState()
 
@@ -29,7 +31,7 @@ export default function DisplayView({
     <div className="rainbow-bg flex h-screen w-full flex-col overflow-hidden">
       <ScoreBar myTeamId={myTeamId} />
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-6">
-        <GameView myTeamId={myTeamId} />
+        <GameView myTeamId={myTeamId} allowAudio={allowAudio} />
       </div>
       {showQr && <QrJoin />}
     </div>

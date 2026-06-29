@@ -10,5 +10,5 @@ export default function SpectatorPage() {
       </div>
     )
   }
-  return <DisplayView showQr />
+  return <DisplayView showQr allowAudio />
 }

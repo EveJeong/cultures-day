@@ -2,12 +2,14 @@ import { useGameState, useQuestions } from '../../lib/game'
 import type { MediaRef } from '../../types'
 
 /** 미디어 렌더 — 가용 영역에 맞춤. fill=true면 작은 원본도 높이에 맞춰 확대(확대샷). */
-function DisplayMedia({ media, fill }: { media: MediaRef; fill?: boolean }) {
+function DisplayMedia({ media, fill, allowAudio }: { media: MediaRef; fill?: boolean; allowAudio?: boolean }) {
   const c = media.contentType ?? ''
   if (c.startsWith('video')) return <video src={media.url} controls className="max-h-full max-w-full rounded-2xl" />
-  // 사용자/관전 화면에서는 오디오 재생 차단(운영 화면에서만 재생) — 안내만 표시
+  // 오디오: 관전(빔)만 재생 허용, 사용자 화면은 안내만 표시
   if (c.startsWith('audio'))
-    return (
+    return allowAudio ? (
+      <audio src={media.url} controls className="w-80 md:w-[28rem]" />
+    ) : (
       <div className="flex flex-col items-center gap-2 text-pink-500">
         <span className="text-7xl md:text-8xl">🎧</span>
         <span className="font-head text-2xl">오디오 문제</span>
@@ -20,7 +22,7 @@ function DisplayMedia({ media, fill }: { media: MediaRef; fill?: boolean }) {
 }
 
 /** 퀴즈 참가자 화면 q1(문제)·q2(정답)·q3(대기) */
-export default function QuizScreen() {
+export default function QuizScreen({ allowAudio }: { allowAudio?: boolean }) {
   const state = useGameState()
   const question = useQuestions().find((q) => q.id === state?.currentQuestionId)
 
@@ -49,9 +51,9 @@ export default function QuizScreen() {
               <p className="font-display text-5xl text-gray-800 md:text-6xl">{question.promptText}</p>
             )}
             {(question.qType === 'image' || question.qType === 'audio') && media[0] && (
-              <DisplayMedia media={media[0]} fill={zoom} />
+              <DisplayMedia media={media[0]} fill={zoom} allowAudio={allowAudio} />
             )}
-            {question.qType === 'images' && media[idx] && <DisplayMedia media={media[idx]} fill={zoom} />}
+            {question.qType === 'images' && media[idx] && <DisplayMedia media={media[idx]} fill={zoom} allowAudio={allowAudio} />}
           </div>
           {question.qType === 'images' && media.length > 0 && (
             <p className="shrink-0 font-head text-2xl text-pink-500">{idx + 1} / {media.length}</p>

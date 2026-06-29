@@ -7,7 +7,7 @@ import PromptScreen from './PromptScreen'
 import { RosterTeamView, RosterEventView } from './RosterView'
 
 /** phase × engineType 디스패처 (designs/03 §3) */
-export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
+export default function GameView({ myTeamId, allowAudio }: { myTeamId?: TeamId | null; allowAudio?: boolean }) {
   const state = useGameState()
   const game = useGames().find((g) => g.id === state?.currentGameId)
 
@@ -27,7 +27,7 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
         ) : game.format === 'roster-event' || eventNames(game).length > 0 ? (
           <RosterEventView game={game} />
         ) : game.engineType === 'quiz' ? (
-          <QuizScreen />
+          <QuizScreen allowAudio={allowAudio} />
         ) : game.engineType === 'prompt' ? (
           <PromptScreen />
         ) : (
