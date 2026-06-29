@@ -19,7 +19,8 @@ export default function GameView({ myTeamId }: { myTeamId?: TeamId | null }) {
   // playing
   return (
     <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3">
-      <TimerView timer={state.timer} />
+      {/* 로스터 게임은 자체 화면에서 표시(릴레이는 큰 스톱워치 포함) */}
+      {!game.format && <TimerView timer={state.timer} />}
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {game.format === 'roster-team' ? (
           <RosterTeamView game={game} />

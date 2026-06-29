@@ -10,6 +10,7 @@ import type {
   ScoreLog,
   Team,
   TeamId,
+  TeamTime,
   User,
 } from '../types'
 
@@ -56,6 +57,36 @@ export function useUsers(): User[] {
 /** 종목 대표자 전체 */
 export function useReps(): Rep[] {
   return useCollection<Rep>('reps')
+}
+
+/** 릴레이 팀별 기록 시간 전체 */
+export function useTimes(): TeamTime[] {
+  return useCollection<TeamTime>('times')
+}
+
+export interface RelayRow {
+  team: Team
+  sec?: number
+  rank?: number // 기록 있는 팀만, 빠른 순 1·2·3…(공동순위)
+}
+
+/** 릴레이 리더보드 — 기록한 팀은 빠른 순 정렬·순위, 미기록 팀은 뒤에 */
+export function relayLeaderboard(teams: Team[], times: TeamTime[], gameId: string): RelayRow[] {
+  const secOf = (id: TeamId) => times.find((x) => x.gameId === gameId && x.teamId === id)?.sec
+  const recorded = teams
+    .filter((t) => secOf(t.id) != null)
+    .sort((a, b) => secOf(a.id)! - secOf(b.id)!)
+  let lastSec = Number.NEGATIVE_INFINITY
+  let lastRank = 0
+  const rows: RelayRow[] = recorded.map((team, i) => {
+    const sec = secOf(team.id)!
+    const rank = sec === lastSec ? lastRank : i + 1
+    lastSec = sec
+    lastRank = rank
+    return { team, sec, rank }
+  })
+  const rest = teams.filter((t) => secOf(t.id) == null).map((team) => ({ team }))
+  return [...rows, ...rest]
 }
 
 /* ---------- 개인 기여도 집계 (userId 귀속 항목) ---------- */

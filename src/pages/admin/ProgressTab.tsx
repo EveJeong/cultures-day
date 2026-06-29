@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useGameState, useGames, useReps, useScoreLog, useTeams } from '../../lib/game'
+import { relayLeaderboard, useGameState, useGames, useReps, useScoreLog, useTeams, useTimes } from '../../lib/game'
+import { saveTeamTime, clearTeamTime } from '../../lib/times'
 import {
   awardFree,
   awardIncrement,
@@ -256,6 +257,7 @@ function ResultStage({
 function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
   if (game.engineType === 'quiz') return <QuizEngine game={game} />
   if (game.engineType === 'prompt') return <PromptEngine game={game} />
+  if (game.format === 'roster-team') return <RelayTimePanel game={game} teams={teams} />
 
   if (game.scoringType === 'increment') {
     const opts = game.incrementOptions ?? [10]
@@ -277,6 +279,68 @@ function ScorePanel({ game, teams }: { game: Game; teams: Team[] }) {
   if (game.scoringType === 'rank') return <RankControl game={game} teams={teams} />
   if (game.scoringType === 'free') return <FreeControl game={game} teams={teams} />
   return null
+}
+
+/** 릴레이(roster-team) 점수 — 진행 팀 스톱워치 기록 저장 → 시간 순위로 등수 점수 확정 */
+function RelayTimePanel({ game, teams }: { game: Game; teams: Team[] }) {
+  const state = useGameState()
+  const times = useTimes()
+  const cur = teams.find((t) => t.id === state?.currentTeamId)
+  const running = state?.timer.status === 'running'
+  const now = useNow(running)
+  const elapsed = state ? elapsedSec(state.timer, now) : 0
+  const board = relayLeaderboard(teams, times, game.id)
+  const recordedCount = board.filter((r) => r.sec != null).length
+
+  const save = () => {
+    if (!cur) return
+    saveTeamTime(game.id, cur.id, elapsed)
+    resetTimer(game.timer?.mode ?? 'stopwatch')
+  }
+  const awardByTime = () => {
+    const ranks: Partial<Record<TeamId, 1 | 2 | 3>> = {}
+    board.forEach((r) => {
+      if (r.sec != null && r.rank != null && r.rank <= 3) ranks[r.team.id] = r.rank as 1 | 2 | 3
+    })
+    awardRank(game, ranks, 'main')
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-2xl bg-pink-50 p-3 text-center">
+        <p className="font-head text-sm text-pink-600">진행 팀: {cur ? cur.name : '미선택 (위에서 선택)'}</p>
+        <p className="font-display text-3xl text-pink-700">{fmt(elapsed)}</p>
+        <button
+          className="btn-mini mt-1 w-full bg-pink-500 text-white disabled:opacity-40"
+          disabled={!cur}
+          onClick={save}
+        >
+          {cur ? `${cur.name} 기록 저장 (${fmt(elapsed)})` : '진행 팀을 선택하세요'}
+        </button>
+      </div>
+
+      <div className="space-y-1">
+        {board.map((r) => (
+          <div key={r.team.id} className="flex items-center gap-2 rounded-xl bg-pink-50 px-3 py-1.5">
+            <span className="w-6 text-center font-head text-pink-500">{r.sec != null ? r.rank : '–'}</span>
+            <span className="flex-1 truncate font-head" style={{ color: r.team.color }}>{r.team.name}</span>
+            <span className="font-display text-pink-700">{r.sec != null ? fmt(r.sec) : '미기록'}</span>
+            {r.sec != null && (
+              <button className="btn-mini" onClick={() => clearTeamTime(game.id, r.team.id)}>삭제</button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        className="btn-mini w-full bg-pink-500 text-white disabled:opacity-40"
+        disabled={recordedCount === 0}
+        onClick={awardByTime}
+      >
+        시간 순위로 점수 확정 ({recordedCount}팀)
+      </button>
+    </div>
+  )
 }
 
 /** 로스터 게임 진행 포인터 — 현재 진행 팀(roster-team) / 종목(roster-event) 선택 → 빔 화면 동기화 */

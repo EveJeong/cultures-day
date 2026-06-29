@@ -61,6 +61,14 @@ export interface Rep {
   userIds: string[]
 }
 
+/** 릴레이(roster-team) 팀별 기록 시간(초) */
+export interface TeamTime {
+  id: string // `${gameId}__${teamId}`
+  gameId: string
+  teamId: TeamId
+  sec: number
+}
+
 export interface Question {
   id: string
   gameId: string
