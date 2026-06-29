@@ -5,7 +5,14 @@ import type { MediaRef } from '../../types'
 function DisplayMedia({ media, fill }: { media: MediaRef; fill?: boolean }) {
   const c = media.contentType ?? ''
   if (c.startsWith('video')) return <video src={media.url} controls className="max-h-full max-w-full rounded-2xl" />
-  if (c.startsWith('audio')) return <audio src={media.url} controls className="w-80 md:w-[28rem]" />
+  // 사용자/관전 화면에서는 오디오 재생 차단(운영 화면에서만 재생) — 안내만 표시
+  if (c.startsWith('audio'))
+    return (
+      <div className="flex flex-col items-center gap-2 text-pink-500">
+        <span className="text-7xl md:text-8xl">🎧</span>
+        <span className="font-head text-2xl">오디오 문제</span>
+      </div>
+    )
   const imgCls = fill
     ? 'h-full w-full rounded-2xl object-contain' // 업스케일(작은 원본도 크게)
     : 'max-h-full max-w-full rounded-2xl object-contain' // 축소만(원본 유지)
